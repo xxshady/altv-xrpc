@@ -1,4 +1,4 @@
-import { defineTypedEventDecorator } from "@xshady/altv-decorators-shared"
+import { defineTypedEventDecorator } from "altv-xdecorators-shared"
 import { container } from "tsyringe"
 import { Rpc } from "../class"
 

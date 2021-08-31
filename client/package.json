@@ -9,17 +9,15 @@
   "author": "xshady",
   "license": "MIT",
   "dependencies": {
-    "@xshady/altv-decorators-client": "^2.0.5",
-    "@xshady/altv-decorators-shared": "^2.0.3",
-    "altv-xrpc-shared": "^1.0.2",
+    "altv-xdecorators-client": "^1.0.0",
+    "altv-xrpc-shared": "^1.0.0",
     "reflect-metadata": "^0.1.13",
     "tsyringe": "^4.6.0"
   },
   "devDependencies": {
-    "@altv/types-server": "^1.9.8",
+    "@altv/types-client": "^1.7.7",
     "@altv/types-shared": "^1.0.2",
-    "altv-xlogger": "^1.0.3",
-    "typescript": "^4.4.2"
+    "altv-xlogger": "^1.0.3"
   },
   "files": [
     "dist/**/*"

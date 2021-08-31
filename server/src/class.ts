@@ -1,6 +1,6 @@
 import alt from "alt-server"
 import * as rpc from "altv-xrpc-shared"
-import { onAlt, onClientTyped } from "@xshady/altv-decorators-server"
+import { onAlt, onClientTyped } from "altv-xdecorators-server"
 import type { PlayerPendingEvents } from "./types"
 import { nextTickAsync } from "./helpers"
 

@@ -7,27 +7,24 @@
   resolved "https://registry.yarnpkg.com/@altv/types-server/-/types-server-1.9.8.tgz#a6c8ffeedf029d94d7c8e1ccc5659e2237dc2c02"
   integrity sha512-PfdTPbjnhwNY0fZp/tPwPlHGBqfVEhpzrQzgKAuaB3Nz1EpgCbyLZdN6O44VAfTJgK2CcOfHGYJmA6wElNaebQ==
 
-"@altv/types-shared@^1.0.1", "@altv/types-shared@^1.0.2":
+"@altv/types-shared@^1.0.2":
   version "1.0.2"
   resolved "https://registry.yarnpkg.com/@altv/types-shared/-/types-shared-1.0.2.tgz#c9b3b4964bb8c690883a243f8fbefaeb574b520f"
   integrity sha512-yxJh6u4jFjyrZsFOe2Fx7352e8WO+k/YxXHcSktBc3Zq5suIDhaMIk6dy7K+pYHKDlPa0DNzPnnjcq3QUYK6Qw==
 
-"@xshady/altv-decorators-server@^2.0.2":
-  version "2.0.7"
-  resolved "https://registry.yarnpkg.com/@xshady/altv-decorators-server/-/altv-decorators-server-2.0.7.tgz#2265c76d49dbc966a6ee95fdeb81a8a875afcf6f"
-  integrity sha512-sWnzjbSXz0xVUtzxDUheiyVzuLuHAX122C8G6KJ5XnYWDSa4cY87UBu4BAuTGE+/U3yie9DSanb9bhQsouDbSg==
+altv-xdecorators-server@^1.0.1:
+  version "1.0.1"
+  resolved "https://registry.yarnpkg.com/altv-xdecorators-server/-/altv-xdecorators-server-1.0.1.tgz#ec76167dfc4888a6ff52edffc42bf2d7e8374225"
+  integrity sha512-yp+Zu10hBTB9oG8LnyTyKfRE1IEbUr38T237c67F7aDWCx2TkARhdeArJVUXZxWGRho2LFryqs1EphlhhpRh7w==
   dependencies:
-    "@altv/types-server" "^1.9.8"
-    "@altv/types-shared" "^1.0.2"
-    "@xshady/altv-decorators-shared" "^2.0.3"
+    altv-xdecorators-shared "^2.0.3"
     reflect-metadata "^0.1.13"
 
-"@xshady/altv-decorators-shared@^2.0.3":
-  version "2.0.3"
-  resolved "https://registry.yarnpkg.com/@xshady/altv-decorators-shared/-/altv-decorators-shared-2.0.3.tgz#4a1d9230d1fd6677e26b85edf06503a281e142a8"
-  integrity sha512-p/i+yu6gIGepejVOnYdHssvQqwhipOaZ6TuJzfHoqsK5swgt/gj4PdK05sxENqBDgUJMolaYgPg3qVQtqXo6dQ==
+altv-xdecorators-shared@^2.0.3:
+  version "1.0.0"
+  resolved "https://registry.yarnpkg.com/altv-xdecorators-shared/-/altv-xdecorators-shared-1.0.0.tgz#78cae7b99e1bfaea92cda3c6835a67cf2b26660a"
+  integrity sha512-WjJnQMlg+vCJ4V3LlejFX8sIVxE7OlN9Rf2NiEDgxXsG8WwiQQ3wAnQ3phggu87aZME5lDkqID5p9HO0c/c2vw==
   dependencies:
-    "@altv/types-shared" "^1.0.1"
     reflect-metadata "^0.1.13"
     tsyringe "^4.6.0"
 

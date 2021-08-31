@@ -1,4 +1,4 @@
-import { defineOnClientTyped } from "@xshady/altv-decorators-server"
+import { defineOnClientTyped } from "altv-xdecorators-server"
 import { container } from "tsyringe"
 import { Rpc } from "../class"
 

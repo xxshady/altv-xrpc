@@ -17,7 +17,7 @@ export class SharedRpc {
   public readonly ErrorCodes = ErrorCodes
   public readonly RpcError = RpcError
 
-  protected readonly log = createLogger("rpc", { logLevel: alt.debug ? LogLevel.Info : LogLevel.Warn })
+  protected readonly log = createLogger("rpc", { logLevel: LogLevel.Warn })
   protected readonly handlers: Map<RpcHandlerKey, RpcHandlerInfo> = new Map()
 
   protected addHandler <T extends RpcHandlerType> (
