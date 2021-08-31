@@ -1,0 +1,17 @@
+{
+  "compilerOptions": {
+    "target": "esnext",     
+    "module": "esnext",   
+    "strict": true,                 
+    "allowSyntheticDefaultImports": true,     
+    "esModuleInterop": true,        
+    "experimentalDecorators": true, 
+    "emitDecoratorMetadata": true,
+    "moduleResolution": "node",
+    "noImplicitAny": true,
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "declaration": true,
+    "useUnknownInCatchVariables": false
+  }
+}
