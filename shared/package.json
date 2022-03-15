@@ -1,6 +1,6 @@
 {
-  "name": "altv-xrpc-shared",
-  "version": "1.0.2",
+  "name": "altv-xxrpc-shared",
+  "version": "1.0.0",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
@@ -13,7 +13,7 @@
     "reflect-metadata": "^0.1.13"
   },
   "devDependencies": {
-    "@altv/types-shared": "^1.0.2",
+    "@altv/types-shared": "^1.0.2"
   },
   "files": [
     "dist/**/*"

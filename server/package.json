@@ -1,6 +1,6 @@
 {
-  "name": "altv-xrpc-server",
-  "version": "1.0.5",
+  "name": "altv-xxrpc-server",
+  "version": "1.0.3",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "author": "xshady",
@@ -9,8 +9,8 @@
   },
   "license": "MIT",
   "dependencies": {
-    "altv-xdecorators-server": "^1.0.0",
-    "altv-xrpc-shared": "^1.0.0",
+    "altv-xxdecorators-server": "^1.0.4",
+    "altv-xxrpc-shared": "^1.0.0",
     "reflect-metadata": "^0.1.13",
     "tsyringe": "^4.6.0"
   },

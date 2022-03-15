@@ -12,22 +12,6 @@
   resolved "https://registry.yarnpkg.com/@altv/types-shared/-/types-shared-1.0.2.tgz#c9b3b4964bb8c690883a243f8fbefaeb574b520f"
   integrity sha512-yxJh6u4jFjyrZsFOe2Fx7352e8WO+k/YxXHcSktBc3Zq5suIDhaMIk6dy7K+pYHKDlPa0DNzPnnjcq3QUYK6Qw==
 
-altv-xdecorators-client@^1.0.0:
-  version "1.0.0"
-  resolved "https://registry.yarnpkg.com/altv-xdecorators-client/-/altv-xdecorators-client-1.0.0.tgz#fffa63d75e66f583d9db73294256995ee5402d42"
-  integrity sha512-/IodxpBMVZ0BS39L1GWCnWt06n+D22cXsCv7ANXh2E+Jk5DAJ+4g/nuqDdI9Z7Ci4+9VYrxTFdI3XkZ+i1Wd4Q==
-  dependencies:
-    altv-xdecorators-shared "^2.0.3"
-    reflect-metadata "^0.1.13"
-
-altv-xdecorators-shared@^2.0.3:
-  version "1.0.0"
-  resolved "https://registry.yarnpkg.com/altv-xdecorators-shared/-/altv-xdecorators-shared-1.0.0.tgz#78cae7b99e1bfaea92cda3c6835a67cf2b26660a"
-  integrity sha512-WjJnQMlg+vCJ4V3LlejFX8sIVxE7OlN9Rf2NiEDgxXsG8WwiQQ3wAnQ3phggu87aZME5lDkqID5p9HO0c/c2vw==
-  dependencies:
-    reflect-metadata "^0.1.13"
-    tsyringe "^4.6.0"
-
 altv-xlogger@^1.0.3:
   version "1.0.3"
   resolved "https://registry.yarnpkg.com/altv-xlogger/-/altv-xlogger-1.0.3.tgz#5816e902704f27e5b88e548bbbcb8eb39ef2706d"
@@ -36,10 +20,26 @@ altv-xlogger@^1.0.3:
     reflect-metadata "^0.1.13"
     typescript "^4.4.2"
 
-altv-xrpc-shared@^1.0.2:
-  version "1.0.2"
-  resolved "https://registry.yarnpkg.com/altv-xrpc-shared/-/altv-xrpc-shared-1.0.2.tgz#5789f3f83d760687f3f7adc6f96c0606b1149cdb"
-  integrity sha512-fTNG62l4tJuX+OUKRWxAD4bf93cFoYqKKP4/JLCn6vwJMmEuUfbQ3fDfh9ay2FO/a5WuN5pjby9Z9CvjWZlHCA==
+altv-xxdecorators-client@^1.0.0:
+  version "1.0.0"
+  resolved "https://registry.yarnpkg.com/altv-xxdecorators-client/-/altv-xxdecorators-client-1.0.0.tgz#de1c27a9ca265bc5678247c6fd6e4c2979a1da13"
+  integrity sha512-cQ9zHZiuAwLlNUjit9IgAoT7Vtr02J2i/vd62LbSYl0usMuaztJ8LI7xMOP3B+MATlCdIb3IdXLdcjKXOCxXyg==
+  dependencies:
+    altv-xxdecorators-shared "^1.0.0"
+    reflect-metadata "^0.1.13"
+
+altv-xxdecorators-shared@^1.0.0:
+  version "1.0.0"
+  resolved "https://registry.yarnpkg.com/altv-xxdecorators-shared/-/altv-xxdecorators-shared-1.0.0.tgz#0b33d39d822cab48193b93812bf21c68e8d36160"
+  integrity sha512-akUCsoQlGB51LHxqtlU7JsB4RmaNiN+bHixfd5Wc/WRWY2Ro/6n/FGpwwhZJrx1SPjNawHpBPrlyeKfPtCkAng==
+  dependencies:
+    reflect-metadata "^0.1.13"
+    tsyringe "^4.6.0"
+
+altv-xxrpc-shared@^1.0.0:
+  version "1.0.0"
+  resolved "https://registry.yarnpkg.com/altv-xxrpc-shared/-/altv-xxrpc-shared-1.0.0.tgz#dd6091425f0a8f1f8b154605d9c1cb89e0b67c37"
+  integrity sha512-l0iA73FUSCRqVv18Lxa1mwHHOzJxbXQcTJuz13pz2ZCxWimDkbE+Nr2Zp2HpAu0Vy7wRoDeSV61hZ0arTtcoHQ==
   dependencies:
     altv-xlogger "^1.0.3"
     reflect-metadata "^0.1.13"

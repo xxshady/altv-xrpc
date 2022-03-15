@@ -1,6 +1,6 @@
 import alt from "alt-client"
-import * as rpc from "altv-xrpc-shared"
-import { onServerTyped } from "altv-xdecorators-client"
+import * as rpc from "altv-xxrpc-shared"
+import { onServerTyped } from "altv-xxdecorators-client"
 import type { ServerPendingEvents } from "./types"
 
 export class Rpc extends rpc.SharedRpc {
