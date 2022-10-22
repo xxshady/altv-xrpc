@@ -3,7 +3,8 @@
     "workspaces": [
         "client",
         "server",
-        "shared"
+        "shared",
+        "webview"
     ],
     "dependencies": {
         "@altv/types-client": "^2.3.7",
@@ -19,6 +20,7 @@
         "eslint-plugin-import": "^2.24.2",
         "eslint-plugin-node": "^11.1.0",
         "eslint-plugin-promise": "^5.1.0",
+        "lerna": "^6.0.1",
         "typescript": "^4.8.4"
     },
     "type": "module",
@@ -37,7 +39,6 @@
         "publ:webview": "cd webview && yarn publish",
         "dev": "concurrently 'yarn:dev:*'",
         "build": "concurrently 'yarn:build:*'",
-        "types": "concurrently 'yarn:types:*'",
-        "publ": "yarn build && yarn types && publ:shared && publ:server && publ:client && publ:webview"
+        "publ": "lerna run build && lerna publish"
     }
 }
