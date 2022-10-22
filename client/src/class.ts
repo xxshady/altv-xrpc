@@ -170,7 +170,7 @@ export class Rpc extends shared.SharedRpc {
     })
   }
 
-  public addWebView(webView: alt.WebView): void {
+  public useWebView(webView: alt.WebView): void {
     if (this.webView) throw new Error("WebView already added")
 
     this.webView = webView
