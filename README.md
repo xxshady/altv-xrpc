@@ -3,19 +3,33 @@
 ## Installation
 
 ### yarn
+
+server-side
 ```
 yarn add altv-xrpc-server
 ```
+client-side
 ```
 yarn add altv-xrpc-client
 ```
+webview
+```
+yarn add altv-xrpc-webview
+```
 
 ### npm
+
+server-side
 ```
 npm install altv-xrpc-server
 ```
+client-side
 ```
 npm install altv-xrpc-client
+```
+webview
+```
+npm install altv-xrpc-webview
 ```
 
 
