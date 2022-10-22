@@ -48,9 +48,9 @@ rpc.emitServer("example", 123)
   .then(result => console.log("server rpc result:", result))
   
   // possible reasons of rejection:
-  // listener is running too long (more than 15 seconds) (error code: Expired)
-  // listener is not added for that rpc name (error code: HandlerNotRegistered)
-  // this rpc is already running and no response has been received yet
+  // listener is running too long (more than 15 seconds) (code: Expired)
+  // listener is not added for that rpc name (code: HandlerNotRegistered)
+  // this rpc is already running and no response has been received yet (code: AlreadyPending)
   .catch(e => console.error("something went wrong", e.stack)
 
 // client <-> webview
@@ -72,7 +72,7 @@ rpc.onClient("example", (data) => data)
 rpc.emitClient(alt.Player.all[0], "example", 123)
   .then(result => alt.log("client rpc result:", result))
 
-  // in addition to all of the above reasons of rejection, here the player can disconnect
+  // in addition to all of the above reasons of rejection, here the player can disconnect (code: PlayerDisconnected)
   .catch(e => alt.logError("something went wrong", e.stack))
 
 // server <-> webview
@@ -81,6 +81,7 @@ rpc.onWebView("example", (data) => data)
 // rpc event will be send to webview that was added using rpc.useWebView on client-side
 rpc.emitWebView(alt.Player.all[0], "example", 123)
   .then(result => alt.log("webview rpc result:", result))
+  // possible rejection: rpc.useWebview is not used on client-side (WebViewNotAdded)
   .catch(e => alt.logError("something went wrong", e.stack))
 ```
 
