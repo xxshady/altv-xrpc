@@ -46,6 +46,11 @@ rpc.onServer("example" (data) => 123) // error, one rpc can only have one listen
 rpc.offServer("example") // remove listener
 rpc.emitServer("example", 123)
   .then(result => console.log("server rpc result:", result))
+  
+  // possible reasons of rejection:
+  // listener is running too long (more than 15 seconds) (error code: Expired)
+  // listener is not added for that rpc name (error code: HandlerNotRegistered)
+  // this rpc is already running and no response has been received yet
   .catch(e => console.error("something went wrong", e.stack)
 
 // client <-> webview
@@ -66,6 +71,8 @@ import { rpc } from "altv-xrpc-server"
 rpc.onClient("example", (data) => data)
 rpc.emitClient(alt.Player.all[0], "example", 123)
   .then(result => alt.log("client rpc result:", result))
+
+  // in addition to all of the above reasons of rejection, here the player can disconnect
   .catch(e => alt.logError("something went wrong", e.stack))
 
 // server <-> webview
