@@ -33,7 +33,7 @@ rpc.emitServer("example", 123)
   .catch(e => console.error("something went wrong", e.stack)
 
 // client <-> webview
-rpc.addWebView(new alt.WebView(...)) // only one WebView instance can be used
+rpc.useWebView(new alt.WebView(...)) // only one WebView instance can be used
 
 rpc.onWebView("example", (data) => data)
 rpc.emitWebView("example", 123)
@@ -55,7 +55,7 @@ rpc.emitClient(alt.Player.all[0], "example", 123)
 // server <-> webview
 rpc.onWebView("example", (data) => data)
 
-// rpc event will be send to webview that was added using rpc.addWebView on client-side
+// rpc event will be send to webview that was added using rpc.useWebView on client-side
 rpc.emitWebView(alt.Player.all[0], "example", 123)
   .then(result => alt.log("webview rpc result:", result))
   .catch(e => alt.logError("something went wrong", e.stack))
