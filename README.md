@@ -28,6 +28,8 @@ import { rpc } from "altv-xrpc-client"
 
 // client <-> server
 rpc.onServer("example", (data) => data)
+rpc.onServer("example" (data) => 123) // error, one rpc can only have one listener
+rpc.offServer("example") // remove listener
 rpc.emitServer("example", 123)
   .then(result => console.log("server rpc result:", result))
   .catch(e => console.error("something went wrong", e.stack)
