@@ -1,116 +1,193 @@
-import alt from "alt-server"
-import * as rpc from "altv-xxrpc-shared"
-import { onAlt, onClientTyped } from "altv-xxdecorators-server"
+import * as alt from "alt-server"
+import * as shared from "altv-xrpc-shared"
 import type { PlayerPendingEvents } from "./types"
 import { nextTickAsync } from "./helpers"
+import { logger, logObject } from "./logger"
 
-export class Rpc extends rpc.SharedRpc {
-  private static readonly onClientRpcEvent = onClientTyped<rpc.IServerOnClientEvent>()
-
+export class Rpc extends shared.SharedRpc {
   private readonly clientPendingEvents: Map<alt.Player, PlayerPendingEvents> = new Map()
+  private readonly webViewPendingEvents: Map<alt.Player, PlayerPendingEvents> = new Map()
 
-  @onAlt("playerDisconnect")
-  protected async playerDisconnect (player: alt.Player, reason: string): Promise<void> {
-    const playerPendingEvents = this.clientPendingEvents.get(player)
-    if (!playerPendingEvents) return
+  constructor() {
+    super(logObject)
 
-    await nextTickAsync()
+    alt.on("playerDisconnect", this.onPlayerDisconnect.bind(this))
 
-    playerPendingEvents.forEach(
-      clientPending => {
-        clientPending.reject(
-          `rpc name: ${clientPending.rpcName}`,
-          rpc.ErrorCodes.PlayerDisconnected,
-          false,
-        )
-      })
-
-    this.clientPendingEvents.delete(player)
+    // TODO: add ts check for events
+    alt.onClient(shared.ServerOnClientEvents.CallEvent, this.onClientCallEvent.bind(this))
+    alt.onClient(shared.ServerOnClientEvents.EventResponse, this.onClientEventResponse.bind(this))
+    alt.onClient(shared.ServerOnClientEvents.WebViewEventResponse, this.onWebViewEventResponse.bind(this))
+    alt.onClient(shared.ServerOnClientEvents.CallEventFromWebView, this.onWebViewCallEvent.bind(this))
   }
 
-  @Rpc.onClientRpcEvent(rpc.ServerOnClientEvents.callEvent)
-  protected async onClientCallEvent (player: alt.Player, rpcName: rpc.RpcEventName, args: unknown[]): Promise<void> {
-    this.log.log("onClientCallEvent", "player:", player.toString(), rpcName)
+  private async onPlayerDisconnect(player: alt.Player): Promise<void> {
+    const clientEvents = this.clientPendingEvents.get(player)
+    const webViewEvents = this.webViewPendingEvents.get(player)
 
-    const params = await this.callHandlerFromRemoteSide(rpcName, rpc.RpcHandlerType.onClient, [player, ...args])
+    logger.info("player disconnect:", player.name, "webview events:", webViewEvents)
 
-    this.log.log("callHandlerFromRemoteSide params return:", params)
+    if (!(clientEvents || webViewEvents)) return
+    await nextTickAsync()
+
+    if (clientEvents) {
+      this.clientPendingEvents.delete(player)
+
+      clientEvents.forEach(
+        clientPending => {
+          clientPending.reject(
+            `rpc name: "${clientPending.rpcName}"`,
+            shared.ErrorCodes.PlayerDisconnected,
+            false,
+          )
+        })
+    }
+
+    if (webViewEvents) {
+      this.webViewPendingEvents.delete(player)
+
+      webViewEvents.forEach(
+        clientPending => {
+          clientPending.reject(
+            `webview rpc name: "${clientPending.rpcName}"`,
+            shared.ErrorCodes.PlayerDisconnected,
+            false,
+          )
+        })
+    }
+  }
+
+  private async onClientCallEvent(player: alt.Player, rpcName: shared.RpcEventName, args: unknown[]): Promise<void> {
+    logger.info("onClientCallEvent", "player:", player.toString(), rpcName)
+
+    const params = await this.callHandlerFromRemoteSide(
+      rpcName,
+      shared.RpcHandlerType.ServerOnClient,
+      [player, ...args],
+    )
+
+    logger.info("callHandlerFromRemoteSide params return:", params)
 
     if (!params) return
     if (!player.valid) return
 
-    this.emitClientRpcEvent(player, rpc.ClientOnServerEvents.eventResponse, params)
+    this.emitClientRpcEvent(player, shared.ClientOnServerEvents.EventResponse, params)
   }
 
-  @Rpc.onClientRpcEvent(rpc.ServerOnClientEvents.eventResponse)
-  protected onClientEventResponse (
+  private onClientEventResponse(
     player: alt.Player,
-    rpcName: rpc.RpcEventName,
-    error: rpc.ServerResponseErrorCodes | null,
+    rpcName: shared.RpcEventName,
+    error: shared.ErrorCodes | null,
     result: unknown,
   ): void {
     const clientPending = this.clientPendingEvents.get(player)?.get(rpcName)
 
     if (!clientPending) {
-      this.log.warn(`[onClientEventResponse] rpc name: ${rpcName} received expired response: ${result}`)
+      logger.warn(`[onClientEventResponse] rpc name: "${rpcName}" received expired response: ${result}`)
       return
     }
 
     error
-      ? clientPending.reject(`rpc.emitClient rpc name: ${rpcName} player id: ${player.id} failed`, error)
+      ? clientPending.reject(`rpc.emitClient rpc name: "${rpcName}" failed, player id: ${player.id}`, error)
       : clientPending.resolve(result)
   }
 
-  private emitClientRpcEvent <K extends keyof rpc.IClientOnServerEvent> (
+  private onWebViewEventResponse(
+    player: alt.Player,
+    rpcName: shared.RpcEventName,
+    error: shared.ErrorCodes | null,
+    result: unknown,
+  ): void {
+    const clientPending = this.webViewPendingEvents.get(player)?.get(rpcName)
+
+    if (!clientPending) {
+      logger.warn(`[onWebViewEventResponse] rpc name: "${rpcName}" received expired response: ${result}`)
+      return
+    }
+
+    error
+      ? clientPending.reject(`rpc.emitWebView rpc name: "${rpcName}" failed, player id: ${player.id}`, error)
+      : clientPending.resolve(result)
+  }
+
+  private async onWebViewCallEvent(player: alt.Player, rpcName: shared.RpcEventName, args: unknown[]): Promise<void> {
+    logger.info("onWebViewCallEvent", "player:", player.toString(), "rpc:", rpcName)
+
+    const params = await this.callHandlerFromRemoteSide(
+      rpcName,
+      shared.RpcHandlerType.ServerOnWebView,
+      [player, ...args],
+    )
+
+    logger.info("callHandlerFromRemoteSide params return:", params)
+
+    if (!params) return
+    if (!player.valid) return
+
+    this.emitClientRpcEvent(player, shared.ClientOnServerEvents.WebViewEventResponse, params)
+  }
+
+  private emitClientRpcEvent <K extends keyof shared.IClientOnServerEvent>(
     player: alt.Player,
     eventName: K,
-    args: Parameters<rpc.IClientOnServerEvent[K]>,
+    args: Parameters<shared.IClientOnServerEvent[K]>,
   ): void {
-    this.log.log("emitClientRpcEvent", player.toString(), eventName, args)
+    logger.info("emitClientRpcEvent", player.toString(), eventName, args)
     alt.emitClient(player, eventName, ...args)
   }
 
-  private getPlayerPendingEvents (player: alt.Player): PlayerPendingEvents | undefined {
-    return this.clientPendingEvents.get(player)
-  }
+  private checkPendingClientEvent(player: alt.Player, rpcName: shared.RpcEventName): PlayerPendingEvents | undefined {
+    const playerPendingEvents = this.clientPendingEvents.get(player)
 
-  private checkPendingClientEvent (player: alt.Player, rpcName: rpc.RpcEventName): PlayerPendingEvents | undefined {
-    const playerPendingEvents = this.getPlayerPendingEvents(player)
-
-    if (playerPendingEvents?.has(rpcName)) {
-      throw new rpc.RpcError(`rpc name: ${rpcName}`, rpc.ErrorCodes.AlreadyPending)
-    }
+    if (playerPendingEvents?.has(rpcName))
+      throw new shared.RpcError(`rpc name: "${rpcName}"`, shared.ErrorCodes.AlreadyPending)
 
     return playerPendingEvents
   }
 
-  public onClient (rpcName: rpc.RpcEventName, handler: rpc.UnknownEventHandler): void {
-    this.addHandler(rpcName, rpc.RpcHandlerType.onClient, handler)
+  private checkPendingWebViewEvent(player: alt.Player, rpcName: shared.RpcEventName): PlayerPendingEvents | undefined {
+    const playerPendingEvents = this.webViewPendingEvents.get(player)
+
+    if (playerPendingEvents?.has(rpcName))
+      throw new shared.RpcError(`webview rpc name: "${rpcName}"`, shared.ErrorCodes.AlreadyPending)
+
+    return playerPendingEvents
   }
 
-  public offClient (rpcName: rpc.RpcEventName): void {
-    this.removeHandler(rpcName, rpc.RpcHandlerType.onClient)
+  public onClient(rpcName: shared.RpcEventName, handler: (player: alt.Player, ...args: unknown[]) => void): void {
+    this.addHandler(rpcName, shared.RpcHandlerType.ServerOnClient, handler)
   }
 
-  public emitClient <T extends (...args: any[]) => unknown> (
+  public offClient(rpcName: shared.RpcEventName): void {
+    this.removeHandler(rpcName, shared.RpcHandlerType.ServerOnClient)
+  }
+
+  public onWebView(rpcName: shared.RpcEventName, handler: (player: alt.Player, ...args: unknown[]) => void): void {
+    this.addHandler(rpcName, shared.RpcHandlerType.ServerOnWebView, handler)
+  }
+
+  public offWebView(rpcName: shared.RpcEventName): void {
+    this.removeHandler(rpcName, shared.RpcHandlerType.ServerOnWebView)
+  }
+
+  public emitClient(
     player: alt.Player,
-    rpcName: rpc.RpcEventName,
-    ...args: Parameters<T>
-  ): Promise<ReturnType<T>> {
+    rpcName: shared.RpcEventName,
+    ...args: unknown[]
+  ): Promise<unknown> {
     return new Promise((resolve, reject) => {
       if (!player.valid) {
-        reject(new rpc.RpcError(`rpc name: ${rpcName}`, this.ErrorCodes.PlayerDisconnected))
+        reject(new shared.RpcError(`rpc name: "${rpcName}"`, this.ErrorCodes.PlayerDisconnected))
         return
       }
 
       const playerPendingEvents: PlayerPendingEvents = this.checkPendingClientEvent(
         player,
         rpcName,
-      ) || new Map()
+      ) ?? new Map()
 
       playerPendingEvents.set(
         rpcName,
-        new rpc.RemotePendingController({
+        new shared.RemotePendingController({
           rpcName,
           resolve,
           reject,
@@ -124,7 +201,51 @@ export class Rpc extends rpc.SharedRpc {
 
       this.clientPendingEvents.set(player, playerPendingEvents)
 
-      this.emitClientRpcEvent(player, rpc.ClientOnServerEvents.callEvent, [rpcName, args])
+      this.emitClientRpcEvent(
+        player,
+        shared.ClientOnServerEvents.CallEvent,
+        [rpcName, args],
+      )
+    })
+  }
+
+  public emitWebView(
+    player: alt.Player,
+    rpcName: shared.RpcEventName,
+    ...args: unknown[]
+  ): Promise<unknown> {
+    return new Promise((resolve, reject) => {
+      if (!player.valid) {
+        reject(new shared.RpcError(`webview rpc name: "${rpcName}"`, this.ErrorCodes.PlayerDisconnected))
+        return
+      }
+
+      const webViewPendingEvents: PlayerPendingEvents = this.checkPendingWebViewEvent(
+        player,
+        rpcName,
+      ) ?? new Map()
+
+      webViewPendingEvents.set(
+        rpcName,
+        new shared.RemotePendingController({
+          rpcName,
+          resolve,
+          reject,
+          finish: (): void => {
+            if (!player.valid) return
+            webViewPendingEvents.delete(rpcName)
+          },
+          timeout: this.defaultTimeout,
+        }),
+      )
+
+      this.webViewPendingEvents.set(player, webViewPendingEvents)
+
+      this.emitClientRpcEvent(
+        player,
+        shared.ClientOnServerEvents.CallWebViewEvent,
+        [rpcName, args],
+      )
     })
   }
 }

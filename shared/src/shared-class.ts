@@ -1,26 +1,30 @@
-import alt from "alt-shared"
 import { ErrorCodes, RpcError } from "./errors"
-import { LogLevel, createLogger } from "altv-xlogger"
 import type {
   RpcEventName,
   RpcHandlerKey,
   RpcHandlerResult,
   SharedEventResponseParams,
-  UnknownEventHandler
+  UnknownEventHandler,
 } from "./types"
 import type { RpcHandlerType } from "./enums"
 import { RpcHandlerInfo } from "./rpc-handler-info"
 import { defaultTimeout } from "./constants"
+import type { ILogObject } from "./logger"
+import { Logger } from "./logger"
 
 export class SharedRpc {
   public readonly defaultTimeout = defaultTimeout
   public readonly ErrorCodes = ErrorCodes
   public readonly RpcError = RpcError
 
-  protected readonly log = createLogger("rpc", { logLevel: LogLevel.Warn })
   protected readonly handlers: Map<RpcHandlerKey, RpcHandlerInfo> = new Map()
+  private readonly logger: Logger
 
-  protected addHandler <T extends RpcHandlerType> (
+  constructor(logObject: ILogObject = console) {
+    this.logger = new Logger(logObject)
+  }
+
+  protected addHandler<T extends RpcHandlerType>(
     rpcName: RpcEventName,
     handlerType: T,
     handler: UnknownEventHandler,
@@ -30,18 +34,17 @@ export class SharedRpc {
     this.registerRpcKeyHandler(key, handler)
   }
 
-  protected removeHandler <T extends RpcHandlerType> (
+  protected removeHandler<T extends RpcHandlerType>(
     rpcName: RpcEventName,
     handlerType: T,
   ): void {
     const key = this.createRpcKeyFromName(rpcName, handlerType)
 
-    if (!this.handlers.delete(key)) {
+    if (!this.handlers.delete(key))
       throw new RpcError(`rpc key: ${key}`, ErrorCodes.HandlerNotRegistered)
-    }
   }
 
-  protected async callHandler <T extends RpcHandlerType> (
+  protected async callHandler<T extends RpcHandlerType>(
     eventName: string,
     handlerType: T,
     args: unknown[],
@@ -49,66 +52,65 @@ export class SharedRpc {
     const key = this.createRpcKeyFromName(eventName, handlerType)
     const handlerInfo = this.getRpcHandlerInfoByKey(key)
 
-    if (!handlerInfo) {
+    if (!handlerInfo)
       return ErrorCodes.HandlerNotRegistered
-    }
 
     return await handlerInfo.startPendingHandler(...args)
   }
 
-  protected async callHandlerFromRemoteSide <T extends RpcHandlerType> (
+  protected async callHandlerFromRemoteSide<T extends RpcHandlerType>(
     rpcName: RpcEventName,
     handlerType: T,
     args: unknown[],
-  ): Promise<SharedEventResponseParams | void> {
+  ): Promise<SharedEventResponseParams | undefined> {
     const result = await this.callHandler(rpcName, handlerType, args)
     return this.handleCallHandlerResultFromRemoteSide(rpcName, result)
   }
 
-  private handleCallHandlerResultFromRemoteSide (
+  private handleCallHandlerResultFromRemoteSide(
     rpcName: RpcEventName,
     result: RpcHandlerResult,
-  ): SharedEventResponseParams | void {
+  ): SharedEventResponseParams | undefined {
     let params: SharedEventResponseParams
 
     if (typeof result === "number") {
       if (result === ErrorCodes.Expired) {
-        this.log.warn(`[Expired] rpc name: ${rpcName} call handler duration was too long > ${defaultTimeout} ms`)
+        this.logger.warn(`[Expired] rpc name: "${rpcName}" call handler duration was too long > ${defaultTimeout} ms`)
         return
       }
 
       params = [rpcName, result, null]
-    } else {
+    }
+    else {
       const [error, callHandlerResult] = result
 
       if (error) {
-        this.log.error(`[CallError] rpc name: ${rpcName} handler error: ${error.stack}`)
+        this.logger.error(`[CallError] rpc name: "${rpcName}" handler error: ${error.stack}`)
 
         params = [rpcName, ErrorCodes.CallError, null]
-      } else {
-        params = [rpcName, null, callHandlerResult]
       }
+      else
+        params = [rpcName, null, callHandlerResult]
     }
 
     return params
   }
 
-  protected createRpcKeyFromName <T extends RpcHandlerType> (
+  protected createRpcKeyFromName<T extends RpcHandlerType>(
     rpcName: string,
     type: T,
   ): RpcHandlerKey {
     return `${type}-${rpcName}`
   }
 
-  protected registerRpcKeyHandler (key: RpcHandlerKey, handler: UnknownEventHandler): void {
-    if (this.handlers.get(key)) {
+  protected registerRpcKeyHandler(key: RpcHandlerKey, handler: UnknownEventHandler): void {
+    if (this.handlers.has(key))
       throw new RpcError(`rpc key: ${key}`, ErrorCodes.AlreadyRegistered)
-    }
 
     this.handlers.set(key, new RpcHandlerInfo(key, handler))
   }
 
-  protected getRpcHandlerInfoByKey (key: RpcHandlerKey): RpcHandlerInfo | undefined {
+  protected getRpcHandlerInfoByKey(key: RpcHandlerKey): RpcHandlerInfo | undefined {
     return this.handlers.get(key)
   }
 }

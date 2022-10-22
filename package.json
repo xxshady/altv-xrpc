@@ -1,7 +1,43 @@
 {
-    "devDependencies": {},
+    "private": true,
+    "workspaces": [
+        "client",
+        "server",
+        "shared"
+    ],
     "dependencies": {
-        "typescript": "^4.4.2"
+        "@altv/types-client": "^2.3.7",
+        "@altv/types-server": "^2.5.0",
+        "@altv/types-shared": "^1.3.1",
+        "@typescript-eslint/eslint-plugin": "^4.33.0",
+        "@typescript-eslint/parser": "^4.33.0",
+        "concurrently": "^7.5.0",
+        "dts-bundle-generator": "^7.0.0",
+        "esbuild": "^0.15.12",
+        "eslint": "^7.30.0",
+        "eslint-config-standard": "^16.0.3",
+        "eslint-plugin-import": "^2.24.2",
+        "eslint-plugin-node": "^11.1.0",
+        "eslint-plugin-promise": "^5.1.0",
+        "typescript": "^4.8.4"
     },
-    "type": "module"
+    "type": "module",
+    "scripts": {
+        "dev:shared": "cd shared && yarn dev",
+        "dev:server": "cd server && yarn dev",
+        "dev:client": "cd client && yarn dev",
+        "dev:webview": "cd webview && yarn dev",
+        "build:shared": "cd shared && yarn build",
+        "build:server": "cd server && yarn build",
+        "build:client": "cd client && yarn build",
+        "build:webview": "cd webview && yarn build",
+        "publ:shared": "cd shared && yarn publish",
+        "publ:server": "cd server && yarn publish",
+        "publ:client": "cd client && yarn publish",
+        "publ:webview": "cd webview && yarn publish",
+        "dev": "concurrently 'yarn:dev:*'",
+        "build": "concurrently 'yarn:build:*'",
+        "types": "concurrently 'yarn:types:*'",
+        "publ": "yarn build && yarn types && publ:shared && publ:server && publ:client && publ:webview"
+    }
 }

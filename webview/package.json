@@ -1,5 +1,5 @@
 {
-  "name": "altv-xrpc-client",
+  "name": "altv-xrpc-webview",
   "version": "1.0.1",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",

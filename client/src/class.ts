@@ -1,80 +1,210 @@
-import alt from "alt-client"
-import * as rpc from "altv-xxrpc-shared"
-import { onServerTyped } from "altv-xxdecorators-client"
-import type { ServerPendingEvents } from "./types"
+import * as alt from "alt-client"
+import * as shared from "altv-xrpc-shared"
+import { logger, logObject } from "./logger"
+import type { RemotePendingEvents } from "./types"
 
-export class Rpc extends rpc.SharedRpc {
-  private static onServerRpcEvent = onServerTyped<rpc.IClientOnServerEvent>()
+export class Rpc extends shared.SharedRpc {
+  private readonly serverPendingEvents: RemotePendingEvents = new Map()
+  private readonly webViewPendingEvents: RemotePendingEvents = new Map()
+  private webView: alt.WebView | null = null
 
-  private readonly serverPendingEvents: ServerPendingEvents = new Map()
+  constructor() {
+    super(logObject)
 
-  @Rpc.onServerRpcEvent(rpc.ClientOnServerEvents.callEvent)
-  protected async onServerCallEvent (rpcName: rpc.RpcEventName, args: unknown[]): Promise<void> {
-    const params = await this.callHandlerFromRemoteSide(rpcName, rpc.RpcHandlerType.onServer, args)
-    if (!params) return
+    // TODO: add ts check for events
+    alt.onServer(shared.ClientOnServerEvents.CallEvent, this.onServerCallEvent.bind(this))
+    alt.onServer(shared.ClientOnServerEvents.EventResponse, this.onServerEventResponse.bind(this))
 
-    this.emitServerRpcEvent(rpc.ServerOnClientEvents.eventResponse, params)
+    alt.onServer(shared.ClientOnServerEvents.CallWebViewEvent, this.onServerCallWebViewEvent.bind(this))
+    alt.onServer(shared.ClientOnServerEvents.WebViewEventResponse, this.onServerWebViewEventResponse.bind(this))
   }
 
-  @Rpc.onServerRpcEvent(rpc.ClientOnServerEvents.eventResponse)
-  protected onServerEventResponse (rpcName: rpc.RpcEventName, error: rpc.ErrorCodes | null, result: unknown): void {
-    const serverPending = this.serverPendingEvents.get(rpcName)
+  private async onServerCallEvent(rpcName: shared.RpcEventName, args: unknown[]): Promise<void> {
+    const params = await this.callHandlerFromRemoteSide(
+      rpcName,
+      shared.RpcHandlerType.ClientOnServer,
+      args,
+    )
+    if (!params) return
 
-    if (!serverPending) {
-      this.log.warn(`[onServerEventResponse] rpc name: ${rpcName} received expired response: ${result}`)
+    this.emitServerRpcEvent(shared.ServerOnClientEvents.EventResponse, params)
+  }
+
+  private onServerCallWebViewEvent(rpcName: shared.RpcEventName, args: unknown[]): void {
+    if (!this.webView) {
+      logger.info("onServerCallWebViewEvent webview not added")
+
+      this.emitServerRpcEvent(
+        shared.ServerOnClientEvents.WebViewEventResponse,
+        [rpcName, shared.ErrorCodes.WebViewNotAdded],
+      )
+    }
+
+    this.emitWebViewRpcEvent(
+      shared.WebViewOnClientEvents.CallEventFromServer,
+      [rpcName, args],
+    )
+  }
+
+  private onWebViewServerEventResponse(
+    rpcName: shared.RpcEventName,
+    error: shared.ErrorCodes | null,
+    result: unknown,
+  ): void {
+    logger.info("onWebViewServerEventResponse", rpcName, error, result)
+
+    this.emitServerRpcEvent(shared.ServerOnClientEvents.WebViewEventResponse, [rpcName, error, result])
+  }
+
+  private async onWebViewCallEvent(rpcName: shared.RpcEventName, args: unknown[]): Promise<void> {
+    const params = await this.callHandlerFromRemoteSide(
+      rpcName,
+      shared.RpcHandlerType.ClientOnWebView,
+      args,
+    )
+    if (!params) return
+
+    this.emitWebViewRpcEvent(shared.WebViewOnClientEvents.EventResponse, params)
+  }
+
+  private onWebViewEventResponse(rpcName: shared.RpcEventName, error: shared.ErrorCodes | null, result: unknown): void {
+    const webViewPending = this.webViewPendingEvents.get(rpcName)
+
+    if (!webViewPending) {
+      logger.warn(`[onWebViewEventResponse] rpc name: "${rpcName}" received expired response: ${result}`)
       return
     }
 
     error
-      ? serverPending.reject(`rpc.emitServer rpc name: ${rpcName} failed`, error)
+      ? webViewPending.reject(`rpc.emitWebView rpc name: "${rpcName}" failed`, error)
+      : webViewPending.resolve(result)
+  }
+
+  private onWebViewCallServerEvent(rpcName: shared.RpcEventName, args: unknown[]): void {
+    this.emitServerRpcEvent(
+      shared.ServerOnClientEvents.CallEventFromWebView,
+      [rpcName, args],
+    )
+  }
+
+  private onServerEventResponse(rpcName: shared.RpcEventName, error: shared.ErrorCodes | null, result: unknown): void {
+    const serverPending = this.serverPendingEvents.get(rpcName)
+
+    if (!serverPending) {
+      logger.warn(`[onServerEventResponse] rpc name: "${rpcName}" received expired response: ${result}`)
+      return
+    }
+
+    error
+      ? serverPending.reject(`rpc.emitServer rpc name: "${rpcName}" failed`, error)
       : serverPending.resolve(result)
   }
 
-  private emitServerRpcEvent <K extends keyof rpc.IServerOnClientEvent> (
+  private onServerWebViewEventResponse(rpcName: shared.RpcEventName, error: shared.ErrorCodes | null, result: unknown): void {
+    logger.info("onServerWebViewEventResponse", "rpc:", rpcName, "err:", error, "result:", result)
+
+    this.emitWebViewRpcEvent(shared.WebViewOnClientEvents.ServerEventResponse, [rpcName, error, result])
+  }
+
+  private emitServerRpcEvent <K extends keyof shared.IServerOnClientEvent>(
     eventName: K,
-    args: Parameters<rpc.IServerOnClientEvent[K]>,
+    args: Parameters<shared.IServerOnClientEvent[K]>,
   ): void {
     alt.emitServer(eventName, ...args)
   }
 
-  private checkPendingServerEvent (rpcName: rpc.RpcEventName): rpc.RemotePendingController | undefined {
+  private emitWebViewRpcEvent <K extends keyof shared.IWebViewOnClientEvent>(
+    eventName: K,
+    args: Parameters<shared.IWebViewOnClientEvent[K]>,
+  ): void {
+    this.webView?.emit(eventName, ...args)
+  }
+
+  private checkPendingServerEvent(rpcName: shared.RpcEventName): shared.RemotePendingController | undefined {
     const serverPendingEvent = this.serverPendingEvents.get(rpcName)
 
-    if (serverPendingEvent) {
-      throw new rpc.RpcError(`rpc name: ${rpcName}`, rpc.ErrorCodes.AlreadyPending)
-    }
+    if (serverPendingEvent)
+      throw new shared.RpcError(`server rpc name: "${rpcName}"`, shared.ErrorCodes.AlreadyPending)
 
     return serverPendingEvent
   }
 
-  public onServer (rpcName: rpc.RpcEventName, handler: rpc.UnknownEventHandler): void {
-    this.addHandler(rpcName, rpc.RpcHandlerType.onServer, handler)
+  private checkPendingWebViewEvent(rpcName: shared.RpcEventName): shared.RemotePendingController | undefined {
+    const webViewPendingEvent = this.webViewPendingEvents.get(rpcName)
+
+    if (webViewPendingEvent)
+      throw new shared.RpcError(`rpc name: "${rpcName}"`, shared.ErrorCodes.AlreadyPending)
+
+    return webViewPendingEvent
   }
 
-  public offServer (rpcName: rpc.RpcEventName): void {
-    this.removeHandler(rpcName, rpc.RpcHandlerType.onServer)
+  public onServer(rpcName: shared.RpcEventName, handler: shared.UnknownEventHandler): void {
+    this.addHandler(rpcName, shared.RpcHandlerType.ClientOnServer, handler)
   }
 
-  public emitServer <T extends (...args: any[]) => unknown> (rpcName: string, ...args: Parameters<T>): Promise<ReturnType<T>> {
+  public offServer(rpcName: shared.RpcEventName): void {
+    this.removeHandler(rpcName, shared.RpcHandlerType.ClientOnServer)
+  }
+
+  public emitServer(rpcName: shared.RpcEventName, ...args: unknown[]): Promise<unknown> {
     return new Promise((resolve, reject) => {
-      const serverPending: rpc.RemotePendingController = this.checkPendingServerEvent(rpcName) ||
-      new rpc.RemotePendingController({
-        rpcName,
-        resolve,
-        reject,
-        finish: (result: unknown): void => {
-          this.serverPendingEvents.delete(rpcName)
+      const serverPending: shared.RemotePendingController =
+        this.checkPendingServerEvent(rpcName) ??
+        new shared.RemotePendingController({
+          rpcName,
+          resolve,
+          reject,
+          finish: (result: unknown): void => {
+            this.serverPendingEvents.delete(rpcName)
 
-          this.log.log(
-            `rpc name: ${rpcName} finished with result: ~gl~` +
-            `${(result as any)?.constructor?.name} ${JSON.stringify(result)}`,
-          )
-        },
-        timeout: this.defaultTimeout,
-      })
+            logger.info(
+              `rpc name: "${rpcName}" finished with result: ~gl~` +
+              `${(result as unknown)?.constructor?.name} ${JSON.stringify(result)}`,
+            )
+          },
+          timeout: this.defaultTimeout,
+        })
 
       this.serverPendingEvents.set(rpcName, serverPending)
-      this.emitServerRpcEvent(rpc.ServerOnClientEvents.callEvent, [rpcName, args])
+      this.emitServerRpcEvent(shared.ServerOnClientEvents.CallEvent, [rpcName, args])
+    })
+  }
+
+  public addWebView(webView: alt.WebView): void {
+    if (this.webView) throw new Error("WebView already added")
+
+    this.webView = webView
+    webView.on(shared.ClientOnWebViewEvents.ServerEventResponse, this.onWebViewServerEventResponse.bind(this))
+    webView.on(shared.ClientOnWebViewEvents.CallEvent, this.onWebViewCallEvent.bind(this))
+    webView.on(shared.ClientOnWebViewEvents.EventResponse, this.onWebViewEventResponse.bind(this))
+    webView.on(shared.ClientOnWebViewEvents.CallServerEvent, this.onWebViewCallServerEvent.bind(this))
+  }
+
+  public onWebView(rpcName: shared.RpcEventName, handler: shared.UnknownEventHandler): void {
+    this.addHandler(rpcName, shared.RpcHandlerType.ClientOnWebView, handler)
+  }
+
+  public emitWebView(rpcName: shared.RpcEventName, ...args: unknown[]): Promise<unknown> {
+    return new Promise((resolve, reject) => {
+      const webViewPending: shared.RemotePendingController =
+        this.checkPendingWebViewEvent(rpcName) ??
+        new shared.RemotePendingController({
+          rpcName,
+          resolve,
+          reject,
+          finish: (result: unknown): void => {
+            this.webViewPendingEvents.delete(rpcName)
+
+            logger.info(
+              `webview rpc name: "${rpcName}" finished with result: ~gl~` +
+              `${(result as unknown)?.constructor?.name} ${JSON.stringify(result)}`,
+            )
+          },
+          timeout: this.defaultTimeout,
+        })
+
+      this.webViewPendingEvents.set(rpcName, webViewPending)
+      this.emitWebViewRpcEvent(shared.WebViewOnClientEvents.CallEvent, [rpcName, args])
     })
   }
 }

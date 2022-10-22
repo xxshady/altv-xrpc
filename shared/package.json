@@ -1,21 +1,17 @@
 {
-  "name": "altv-xxrpc-shared",
+  "name": "altv-xrpc-shared",
   "version": "1.0.0",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
-  "scripts": {
-    "publish": "tsc && yarn publish"
-  },
   "author": "xshady",
   "license": "MIT",
-  "dependencies": {
-    "altv-xlogger": "^1.0.3",
-    "reflect-metadata": "^0.1.13"
-  },
-  "devDependencies": {
-    "@altv/types-shared": "^1.0.2"
-  },
   "files": [
     "dist/**/*"
-  ]
+  ],
+  "scripts": {
+    "dev": "node --es-module-specifier-resolution=node build.js -w",
+    "build": "node --es-module-specifier-resolution=node build.js",
+    "types": "dts-bundle-generator --disable-symlinks-following -o dist/index.d.ts src/index.ts"
+  },
+  "type": "module"
 }

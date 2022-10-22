@@ -1,25 +1,17 @@
 {
-  "name": "altv-xxrpc-server",
+  "name": "altv-xrpc-server",
   "version": "1.0.3",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "author": "xshady",
-  "scripts": {
-    "publish": "tsc && yarn publish"
-  },
   "license": "MIT",
-  "dependencies": {
-    "altv-xxdecorators-server": "^1.0.4",
-    "altv-xxrpc-shared": "^1.0.0",
-    "reflect-metadata": "^0.1.13",
-    "tsyringe": "^4.6.0"
-  },
-  "devDependencies": {
-    "@altv/types-server": "^1.9.8",
-    "@altv/types-shared": "^1.0.2",
-    "altv-xlogger": "^1.0.3"
-  },
   "files": [
     "dist/**/*"
-  ]
+  ],
+  "scripts": {
+    "dev": "node --es-module-specifier-resolution=node build.js -w",
+    "build": "node --es-module-specifier-resolution=node build.js",
+    "types": "dts-bundle-generator --disable-symlinks-following -o dist/index.d.ts src/index.ts"
+  },
+  "type": "module"
 }

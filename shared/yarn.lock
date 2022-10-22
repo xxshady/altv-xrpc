@@ -2,10 +2,10 @@
 # yarn lockfile v1
 
 
-"@altv/types-shared@^1.0.2":
-  version "1.0.2"
-  resolved "https://registry.yarnpkg.com/@altv/types-shared/-/types-shared-1.0.2.tgz#c9b3b4964bb8c690883a243f8fbefaeb574b520f"
-  integrity sha512-yxJh6u4jFjyrZsFOe2Fx7352e8WO+k/YxXHcSktBc3Zq5suIDhaMIk6dy7K+pYHKDlPa0DNzPnnjcq3QUYK6Qw==
+"@altv/types-shared@^1.3.1":
+  version "1.3.1"
+  resolved "https://registry.yarnpkg.com/@altv/types-shared/-/types-shared-1.3.1.tgz#1a0ce63b9d197f0b614c68dc4c21de3bf24e033b"
+  integrity sha512-6zepdoj+PoVZOHFfNaevoAIUOKIj/QdnnrhP65tteXa5Slo893jr/RLHHsJsYmJp4K4hKMNt5KazGDzDZO6dEg==
 
 altv-xlogger@^1.0.3:
   version "1.0.3"

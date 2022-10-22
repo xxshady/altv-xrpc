@@ -1,4 +1,4 @@
-import alt from "alt-server"
+import * as alt from "alt-server"
 
-export const nextTickAsync = () => 
-    new Promise(resolve => alt.nextTick(resolve))
+export const nextTickAsync = (): Promise<void> =>
+  new Promise(resolve => alt.nextTick(resolve))

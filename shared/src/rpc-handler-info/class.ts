@@ -1,6 +1,6 @@
-import { createLogger } from "altv-xlogger"
 import { defaultTimeout } from "../constants"
 import { ErrorCodes } from "../errors"
+import { Logger } from "../logger"
 import type {
   RawEventHandler,
   RpcHandlerKey,
@@ -9,9 +9,9 @@ import type {
   RpcHandlerCallResult,
 } from "../types"
 
-export class RpcHandlerInfo {
-  private static readonly log = createLogger("RpcHandlerInfo")
+const logger = new Logger(console)
 
+export class RpcHandlerInfo {
   private pending = false
   private readonly handler: RpcHandlerInfoHandler
   /**
@@ -19,43 +19,45 @@ export class RpcHandlerInfo {
    */
   private startHandlerCallTime = 0
 
-  constructor (
+  constructor(
     public readonly key: RpcHandlerKey,
     rawHandler: RawEventHandler,
   ) {
     this.handler = this.wrapRawHandler(rawHandler)
   }
 
-  private wrapRawHandler (handler: RawEventHandler): RpcHandlerInfoHandler {
+  private wrapRawHandler(handler: RawEventHandler): RpcHandlerInfoHandler {
     if (handler.constructor.name === "AsyncFunction") {
-      return async function (...args): Promise<RpcHandlerCallResult> {
+      return async function(...args): Promise<RpcHandlerCallResult> {
         try {
           const res = await handler.apply(handler, args)
           return [null, res]
-        } catch (e) {
+        }
+        catch (e) {
           return [e, null]
         }
       }
-    } else {
-      return function (...args): RpcHandlerCallResult {
+    }
+    else {
+      return function(...args): RpcHandlerCallResult {
         try {
           const res = handler.apply(handler, args)
           return [null, res]
-        } catch (e) {
+        }
+        catch (e) {
           return [e, null]
         }
       }
     }
   }
 
-  public async startPendingHandler (
-    ...callHandlerArgs: any[]
+  public async startPendingHandler(
+    ...callHandlerArgs: unknown[]
   ): Promise<RpcHandlerResult> {
     const errorStartPending = this.setPending(true)
 
-    if (errorStartPending != null) {
+    if (errorStartPending != null)
       return errorStartPending
-    }
 
     this.startHandlerCallTime = +new Date()
     const handlerResult = await this.handler(...callHandlerArgs)
@@ -63,18 +65,17 @@ export class RpcHandlerInfo {
 
     this.setPending(false)
 
-    if (handlerCallDelay > defaultTimeout) {
+    if (handlerCallDelay > defaultTimeout)
       return ErrorCodes.Expired
-    }
 
     return handlerResult
   }
 
-  private setPending (value: boolean): ErrorCodes.RemoteAlreadyPending | void {
+  private setPending(value: boolean): ErrorCodes.RemoteAlreadyPending | void {
     if (value === this.pending) {
       return (value
         ? ErrorCodes.RemoteAlreadyPending
-        : RpcHandlerInfo.log.warn(`key: ${this.key} setPending already false`)
+        : logger.warn(`key: ${this.key} setPending already false`)
       )
     }
 

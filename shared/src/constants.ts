@@ -1,1 +1,1 @@
-export const defaultTimeout = 5000
+export const defaultTimeout = 15000

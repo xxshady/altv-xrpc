@@ -1,0 +1,9 @@
+{
+  "extends": "./tsconfig.json",
+  "include": [
+    "./client/src/**/*",
+    "./server/src/**/*",
+    "./shared/src/**/*",
+    "./webview/src/**/*",
+  ],
+}

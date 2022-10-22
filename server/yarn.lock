@@ -2,15 +2,15 @@
 # yarn lockfile v1
 
 
-"@altv/types-server@^1.9.8":
-  version "1.9.8"
-  resolved "https://registry.yarnpkg.com/@altv/types-server/-/types-server-1.9.8.tgz#a6c8ffeedf029d94d7c8e1ccc5659e2237dc2c02"
-  integrity sha512-PfdTPbjnhwNY0fZp/tPwPlHGBqfVEhpzrQzgKAuaB3Nz1EpgCbyLZdN6O44VAfTJgK2CcOfHGYJmA6wElNaebQ==
+"@altv/types-server@^2.5.0":
+  version "2.5.0"
+  resolved "https://registry.yarnpkg.com/@altv/types-server/-/types-server-2.5.0.tgz#9629be97b58f1812524ea1ca078d9d763b41dd29"
+  integrity sha512-8tc3vz7+PdVHlquSKD5JZjQjFqtnbS+n93bz7xuDfQ6dEHWVIhTW1s3IugJTbMXBhJwhtuey7Vsd2ev4LGiExg==
 
 "@altv/types-shared@^1.0.2":
-  version "1.0.2"
-  resolved "https://registry.yarnpkg.com/@altv/types-shared/-/types-shared-1.0.2.tgz#c9b3b4964bb8c690883a243f8fbefaeb574b520f"
-  integrity sha512-yxJh6u4jFjyrZsFOe2Fx7352e8WO+k/YxXHcSktBc3Zq5suIDhaMIk6dy7K+pYHKDlPa0DNzPnnjcq3QUYK6Qw==
+  version "1.3.1"
+  resolved "https://registry.yarnpkg.com/@altv/types-shared/-/types-shared-1.3.1.tgz#1a0ce63b9d197f0b614c68dc4c21de3bf24e033b"
+  integrity sha512-6zepdoj+PoVZOHFfNaevoAIUOKIj/QdnnrhP65tteXa5Slo893jr/RLHHsJsYmJp4K4hKMNt5KazGDzDZO6dEg==
 
 altv-xlogger@^1.0.3:
   version "1.0.3"
@@ -19,22 +19,6 @@ altv-xlogger@^1.0.3:
   dependencies:
     reflect-metadata "^0.1.13"
     typescript "^4.4.2"
-
-altv-xxdecorators-server@^1.0.4:
-  version "1.0.4"
-  resolved "https://registry.yarnpkg.com/altv-xxdecorators-server/-/altv-xxdecorators-server-1.0.4.tgz#c7e48d32221979e93f968d022783015be98c60d5"
-  integrity sha512-VWtSS32qEsyYtHHf9l2DMkLHjzkxOl7UllFJtJ/afw/UZUJrNASOEeqxjMwEucqra9/MM/sEINggyW+Mdx89Xw==
-  dependencies:
-    altv-xxdecorators-shared "^1.0.1"
-    reflect-metadata "^0.1.13"
-
-altv-xxdecorators-shared@^1.0.1:
-  version "1.0.1"
-  resolved "https://registry.yarnpkg.com/altv-xxdecorators-shared/-/altv-xxdecorators-shared-1.0.1.tgz#af445083576855cf9af5ca35098d2ab47ee1f1e3"
-  integrity sha512-KbAtlwFQOKfLE2NZerpMFA4N/MulVyAJpMnrPMtS5UxpdpVzaTWj/HDbSXXIpy9+HvmtjYbu6MTfo+hk0xQJLA==
-  dependencies:
-    reflect-metadata "^0.1.13"
-    tsyringe "^4.6.0"
 
 altv-xxrpc-shared@^1.0.0:
   version "1.0.0"
@@ -49,19 +33,7 @@ reflect-metadata@^0.1.13:
   resolved "https://registry.yarnpkg.com/reflect-metadata/-/reflect-metadata-0.1.13.tgz#67ae3ca57c972a2aa1642b10fe363fe32d49dc08"
   integrity sha512-Ts1Y/anZELhSsjMcU605fU9RE4Oi3p5ORujwbIKXfWa+0Zxs510Qrmrce5/Jowq3cHSZSJqBjypxmHarc+vEWg==
 
-tslib@^1.9.3:
-  version "1.14.1"
-  resolved "https://registry.yarnpkg.com/tslib/-/tslib-1.14.1.tgz#cf2d38bdc34a134bcaf1091c41f6619e2f672d00"
-  integrity sha512-Xni35NKzjgMrwevysHTCArtLDpPvye8zV/0E4EyYn43P7/7qvQwPh9BGkHewbMulVntbigmcT7rdX3BNo9wRJg==
-
-tsyringe@^4.6.0:
-  version "4.6.0"
-  resolved "https://registry.yarnpkg.com/tsyringe/-/tsyringe-4.6.0.tgz#14915d3d7f0db35e1cf7269bdbf7c440713c8d07"
-  integrity sha512-BMQAZamSfEmIQzH8WJeRu1yZGQbPSDuI9g+yEiKZFIcO46GPZuMOC2d0b52cVBdw1d++06JnDSIIZvEnogMdAw==
-  dependencies:
-    tslib "^1.9.3"
-
 typescript@^4.4.2:
-  version "4.4.2"
-  resolved "https://registry.yarnpkg.com/typescript/-/typescript-4.4.2.tgz#6d618640d430e3569a1dfb44f7d7e600ced3ee86"
-  integrity sha512-gzP+t5W4hdy4c+68bfcv0t400HVJMMd2+H9B7gae1nQlBzCqvrXX+6GL/b3GAgyTH966pzrZ70/fRjwAtZksSQ==
+  version "4.8.4"
+  resolved "https://registry.yarnpkg.com/typescript/-/typescript-4.8.4.tgz#c464abca159669597be5f96b8943500b238e60e6"
+  integrity sha512-QCh+85mCy+h0IGff8r5XWzOVSbBO+KfeYrMQh7NJ58QujwcE22u+NUSmUxqF+un70P9GXKxa2HCNiTTMJknyjQ==

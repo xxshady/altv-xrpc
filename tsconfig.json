@@ -8,10 +8,13 @@
     "experimentalDecorators": true, 
     "emitDecoratorMetadata": true,
     "moduleResolution": "node",
-    "noImplicitAny": true,
     "resolveJsonModule": true,
     "isolatedModules": true,
     "declaration": true,
-    "useUnknownInCatchVariables": false
+    "useUnknownInCatchVariables": false,
+    "typeRoots": [
+      "./node_modules/@altv",
+      "./types",
+    ]
   }
 }

@@ -1,3 +1,3 @@
-import type { RpcEventName, RemotePendingController } from "altv-xxrpc-shared"
+import type { RpcEventName, RemotePendingController } from "altv-xrpc-shared"
 
-export type ServerPendingEvents = Map<RpcEventName, RemotePendingController>
+export type RemotePendingEvents = Map<RpcEventName, RemotePendingController>
