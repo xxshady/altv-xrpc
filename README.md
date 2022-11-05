@@ -4,7 +4,6 @@
 
 ### yarn
 
-server-side
 ```
 yarn add altv-xrpc-server
 yarn add altv-xrpc-client
