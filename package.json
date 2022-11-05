@@ -30,16 +30,7 @@
         "dev:server": "cd server && yarn dev",
         "dev:client": "cd client && yarn dev",
         "dev:webview": "cd webview && yarn dev",
-        "build:shared": "cd shared && yarn build",
-        "build:server": "cd server && yarn build",
-        "build:client": "cd client && yarn build",
-        "build:webview": "cd webview && yarn build",
-        "publ:shared": "cd shared && yarn publish",
-        "publ:server": "cd server && yarn publish",
-        "publ:client": "cd client && yarn publish",
-        "publ:webview": "cd webview && yarn publish",
         "dev": "concurrently 'yarn:dev:*'",
-        "build": "concurrently 'yarn:build:*'",
         "publ": "lerna run build && lerna publish"
     }
 }
