@@ -7,42 +7,23 @@
 server-side
 ```
 yarn add altv-xrpc-server
-```
-client-side
-```
 yarn add altv-xrpc-client
-```
-webview
-```
 yarn add altv-xrpc-webview
-```
-types
-```
-yarn add altv-xrpc-shared-types
+yarn add altv-xrpc-shared-types  // advanced typescript support
 ```
 
 ### npm
 
-server-side
 ```
 npm install altv-xrpc-server
-```
-client-side
-```
 npm install altv-xrpc-client
-```
-webview
-```
 npm install altv-xrpc-webview
-```
-advanced typescript support
-```
-yarn add altv-xrpc-shared-types
+npm install altv-xrpc-shared-types // advanced typescript support
 ```
 
 ## Usage
 
-Mini-example of `altv-xrpc-shared-types` usage is [here](/example)
+Mini-example of advanced typescript support (`altv-xrpc-shared-types`) usage is [here](/example)
 
 ### client
 ```ts
