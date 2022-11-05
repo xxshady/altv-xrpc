@@ -161,7 +161,7 @@ export class Rpc extends shared.SharedRpc {
 
   public onClient<K extends keyof IClientServerRpc>(
     rpcName: K,
-    handler: (player: alt.Player, ...args: Parameters<IClientServerRpc[K]>) => ReturnType<IClientServerRpc[K]>,
+    handler: (player: alt.Player, ...args: Parameters<IClientServerRpc[K]>) => shared.ReturnMaybePromise<IClientServerRpc[K]>,
   ): void {
     this.addHandler(rpcName, shared.RpcHandlerType.ServerOnClient, handler as shared.UnknownEventHandler)
   }
@@ -172,7 +172,7 @@ export class Rpc extends shared.SharedRpc {
 
   public onWebView<K extends keyof IWebViewServerRpc>(
     rpcName: K,
-    handler: (player: alt.Player, ...args: Parameters<IWebViewServerRpc[K]>) => ReturnType<IWebViewServerRpc[K]>,
+    handler: (player: alt.Player, ...args: Parameters<IWebViewServerRpc[K]>) => shared.ReturnMaybePromise<IWebViewServerRpc[K]>,
   ): void {
     this.addHandler(rpcName, shared.RpcHandlerType.ServerOnWebView, handler as shared.UnknownEventHandler)
   }

@@ -141,7 +141,7 @@ export class Rpc extends shared.SharedRpc {
 
   public onServer<K extends keyof IServerClientRpc>(
     rpcName: K,
-    handler: (...args: Parameters<IServerClientRpc[K]>) => ReturnType<IServerClientRpc[K]>,
+    handler: (...args: Parameters<IServerClientRpc[K]>) => shared.ReturnMaybePromise<IServerClientRpc[K]>,
   ): void {
     this.addHandler(rpcName, shared.RpcHandlerType.ClientOnServer, handler as shared.UnknownEventHandler)
   }
@@ -189,7 +189,7 @@ export class Rpc extends shared.SharedRpc {
 
   public onWebView<K extends keyof IWebViewClientRpc>(
     rpcName: K,
-    handler: (...args: Parameters<IWebViewClientRpc[K]>) => ReturnType<IWebViewClientRpc[K]>,
+    handler: (...args: Parameters<IWebViewClientRpc[K]>) => shared.ReturnMaybePromise<IWebViewClientRpc[K]>,
   ): void {
     if (!this.webView)
       throw new Error("WebView is not added")

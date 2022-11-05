@@ -20,3 +20,5 @@ export type RawEventHandler = (...args: any[]) => unknown
 export type SharedEventResponseParams = Parameters<ISharedOnRemoteEvent["rpc:eventResponse"]>
 
 export type UnknownEventHandler = (...args: any[]) => unknown
+
+export type ReturnMaybePromise<T extends (...args: any[]) => any> = Promise<ReturnType<T>> | ReturnType<T>

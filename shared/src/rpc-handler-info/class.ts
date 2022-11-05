@@ -27,26 +27,13 @@ export class RpcHandlerInfo {
   }
 
   private wrapRawHandler(handler: RawEventHandler): RpcHandlerInfoHandler {
-    if (handler.constructor.name === "AsyncFunction") {
-      return async function(...args): Promise<RpcHandlerCallResult> {
-        try {
-          const res = await handler.apply(handler, args)
-          return [null, res]
-        }
-        catch (e) {
-          return [e, null]
-        }
+    return async function(...args): Promise<RpcHandlerCallResult> {
+      try {
+        const res = await handler.apply(handler, args)
+        return [null, res]
       }
-    }
-    else {
-      return function(...args): RpcHandlerCallResult {
-        try {
-          const res = handler.apply(handler, args)
-          return [null, res]
-        }
-        catch (e) {
-          return [e, null]
-        }
+      catch (e) {
+        return [e, null]
       }
     }
   }
