@@ -16,6 +16,10 @@ webview
 ```
 yarn add altv-xrpc-webview
 ```
+types
+```
+yarn add altv-xrpc-shared-types
+```
 
 ### npm
 
@@ -31,9 +35,14 @@ webview
 ```
 npm install altv-xrpc-webview
 ```
-
+advanced typescript support
+```
+yarn add altv-xrpc-shared-types
+```
 
 ## Usage
+
+Mini-example of `altv-xrpc-shared-types` usage is [here](/example)
 
 ### client
 ```ts

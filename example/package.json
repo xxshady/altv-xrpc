@@ -1,0 +1,8 @@
+{
+  "name": "example",
+  "dependencies": {
+    "altv-xrpc-client": "^0.0.5",
+    "altv-xrpc-server": "^0.0.5",
+    "altv-xrpc-shared-types": "^0.0.5"
+  }
+}

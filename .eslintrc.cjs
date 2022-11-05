@@ -111,5 +111,6 @@ module.exports = {
     '*.js',
     'dist',
     '*.d.ts',
+    'example/*'
   ],
 }
