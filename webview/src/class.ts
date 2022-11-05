@@ -1,4 +1,5 @@
 import * as shared from "altv-xrpc-shared"
+import type { IClientWebViewRpc, IServerWebViewRpc, IWebViewClientRpc, IWebViewServerRpc } from "altv-xrpc-shared-types"
 import type { PendingEvents } from "./types"
 
 const logger = new shared.Logger(console)
@@ -89,23 +90,32 @@ export class Rpc extends shared.SharedRpc {
     return clientPendingEvent
   }
 
-  public onServer(rpcName: shared.RpcEventName, handler: shared.UnknownEventHandler): void {
-    this.addHandler(rpcName, shared.RpcHandlerType.WebViewOnServer, handler)
+  public onServer<K extends keyof IServerWebViewRpc>(
+    rpcName: K,
+    handler: (...args: Parameters<IServerWebViewRpc[K]>) => ReturnType<IServerWebViewRpc[K]>,
+  ): void {
+    this.addHandler(rpcName, shared.RpcHandlerType.WebViewOnServer, handler as shared.UnknownEventHandler)
   }
 
-  public offServer(rpcName: shared.RpcEventName): void {
+  public offServer<K extends keyof IServerWebViewRpc>(rpcName: K): void {
     this.removeHandler(rpcName, shared.RpcHandlerType.WebViewOnServer)
   }
 
-  public onClient(rpcName: shared.RpcEventName, handler: shared.UnknownEventHandler): void {
-    this.addHandler(rpcName, shared.RpcHandlerType.WebViewOnClient, handler)
+  public onClient<K extends keyof IClientWebViewRpc>(
+    rpcName: K,
+    handler: (...args: Parameters<IClientWebViewRpc[K]>) => ReturnType<IClientWebViewRpc[K]>,
+  ): void {
+    this.addHandler(rpcName, shared.RpcHandlerType.WebViewOnClient, handler as shared.UnknownEventHandler)
   }
 
-  public offClient(rpcName: shared.RpcEventName): void {
+  public offClient<K extends keyof IClientWebViewRpc>(rpcName: K): void {
     this.removeHandler(rpcName, shared.RpcHandlerType.WebViewOnClient)
   }
 
-  public emitClient(rpcName: shared.RpcEventName, ...args: unknown[]): Promise<void> {
+  public emitClient<K extends keyof IWebViewClientRpc>(
+    rpcName: K,
+    ...args: Parameters<IWebViewClientRpc[K]>[]
+  ): Promise<ReturnType<IWebViewClientRpc[K]>> {
     return new Promise((resolve, reject) => {
       const clientPending: shared.RemotePendingController =
         this.checkPendingClientEvent(rpcName) ??
@@ -126,7 +136,10 @@ export class Rpc extends shared.SharedRpc {
     })
   }
 
-  public emitServer(rpcName: shared.RpcEventName, ...args: unknown[]): Promise<void> {
+  public emitServer<K extends keyof IWebViewServerRpc>(
+    rpcName: K,
+    ...args: Parameters<IWebViewServerRpc[K]>[]
+  ): Promise<ReturnType<IWebViewServerRpc[K]>> {
     return new Promise((resolve, reject) => {
       const clientPending: shared.RemotePendingController =
         this.checkPendingServerEvent(rpcName) ??

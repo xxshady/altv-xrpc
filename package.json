@@ -4,7 +4,8 @@
         "client",
         "server",
         "shared",
-        "webview"
+        "webview",
+        "shared-types"
     ],
     "dependencies": {
         "@altv/types-client": "^2.3.7",

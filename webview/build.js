@@ -15,5 +15,6 @@ build({
   outdir: './dist',
   external: [
     ...sharedOptions.external,
+    'altv-xrpc-shared',
   ],
 }).then(typesGenerator())

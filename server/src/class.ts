@@ -3,6 +3,12 @@ import * as shared from "altv-xrpc-shared"
 import type { PlayerPendingEvents } from "./types"
 import { nextTickAsync } from "./helpers"
 import { logger, logObject } from "./logger"
+import type {
+  IServerWebViewRpc,
+  IClientServerRpc,
+  IServerClientRpc,
+  IWebViewServerRpc,
+} from "altv-xrpc-shared-types"
 
 export class Rpc extends shared.SharedRpc {
   private readonly clientPendingEvents: Map<alt.Player, PlayerPendingEvents> = new Map()
@@ -153,27 +159,33 @@ export class Rpc extends shared.SharedRpc {
     return playerPendingEvents
   }
 
-  public onClient(rpcName: shared.RpcEventName, handler: (player: alt.Player, ...args: unknown[]) => void): void {
-    this.addHandler(rpcName, shared.RpcHandlerType.ServerOnClient, handler)
+  public onClient<K extends keyof IClientServerRpc>(
+    rpcName: K,
+    handler: (player: alt.Player, ...args: Parameters<IClientServerRpc[K]>) => ReturnType<IClientServerRpc[K]>,
+  ): void {
+    this.addHandler(rpcName, shared.RpcHandlerType.ServerOnClient, handler as shared.UnknownEventHandler)
   }
 
-  public offClient(rpcName: shared.RpcEventName): void {
+  public offClient<K extends keyof IClientServerRpc>(rpcName: K): void {
     this.removeHandler(rpcName, shared.RpcHandlerType.ServerOnClient)
   }
 
-  public onWebView(rpcName: shared.RpcEventName, handler: (player: alt.Player, ...args: unknown[]) => void): void {
-    this.addHandler(rpcName, shared.RpcHandlerType.ServerOnWebView, handler)
+  public onWebView<K extends keyof IWebViewServerRpc>(
+    rpcName: K,
+    handler: (player: alt.Player, ...args: Parameters<IWebViewServerRpc[K]>) => ReturnType<IWebViewServerRpc[K]>,
+  ): void {
+    this.addHandler(rpcName, shared.RpcHandlerType.ServerOnWebView, handler as shared.UnknownEventHandler)
   }
 
-  public offWebView(rpcName: shared.RpcEventName): void {
+  public offWebView<K extends keyof IWebViewServerRpc>(rpcName: K): void {
     this.removeHandler(rpcName, shared.RpcHandlerType.ServerOnWebView)
   }
 
-  public emitClient(
+  public emitClient<K extends keyof IServerClientRpc>(
     player: alt.Player,
-    rpcName: shared.RpcEventName,
-    ...args: unknown[]
-  ): Promise<unknown> {
+    rpcName: K,
+    ...args: Parameters<IServerClientRpc[K]>
+  ): Promise<ReturnType<IServerClientRpc[K]>> {
     return new Promise((resolve, reject) => {
       if (!player.valid) {
         reject(new shared.RpcError(`rpc name: "${rpcName}"`, this.ErrorCodes.PlayerDisconnected))
@@ -209,11 +221,11 @@ export class Rpc extends shared.SharedRpc {
     })
   }
 
-  public emitWebView(
+  public emitWebView<K extends keyof IServerWebViewRpc>(
     player: alt.Player,
-    rpcName: shared.RpcEventName,
-    ...args: unknown[]
-  ): Promise<unknown> {
+    rpcName: K,
+    ...args: Parameters<IServerWebViewRpc[K]>
+  ): Promise<ReturnType<IServerWebViewRpc[K]>> {
     return new Promise((resolve, reject) => {
       if (!player.valid) {
         reject(new shared.RpcError(`webview rpc name: "${rpcName}"`, this.ErrorCodes.PlayerDisconnected))

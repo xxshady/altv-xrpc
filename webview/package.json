@@ -13,5 +13,8 @@
     "build": "node --es-module-specifier-resolution=node build.js",
     "types": "dts-bundle-generator --disable-symlinks-following -o dist/index.d.ts src/index.ts"
   },
-  "type": "module"
+  "type": "module",
+  "peerDependencies": {
+    "altv-xrpc-shared-types": "latest"
+  }
 }

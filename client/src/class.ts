@@ -1,5 +1,6 @@
 import * as alt from "alt-client"
 import * as shared from "altv-xrpc-shared"
+import type { IClientServerRpc, IClientWebViewRpc, IServerClientRpc, IWebViewClientRpc } from "altv-xrpc-shared-types"
 import { logger, logObject } from "./logger"
 import type { RemotePendingEvents } from "./types"
 
@@ -138,15 +139,21 @@ export class Rpc extends shared.SharedRpc {
     return webViewPendingEvent
   }
 
-  public onServer(rpcName: shared.RpcEventName, handler: shared.UnknownEventHandler): void {
-    this.addHandler(rpcName, shared.RpcHandlerType.ClientOnServer, handler)
+  public onServer<K extends keyof IServerClientRpc>(
+    rpcName: K,
+    handler: (...args: Parameters<IServerClientRpc[K]>) => ReturnType<IServerClientRpc[K]>,
+  ): void {
+    this.addHandler(rpcName, shared.RpcHandlerType.ClientOnServer, handler as shared.UnknownEventHandler)
   }
 
-  public offServer(rpcName: shared.RpcEventName): void {
+  public offServer<K extends keyof IServerClientRpc>(rpcName: K): void {
     this.removeHandler(rpcName, shared.RpcHandlerType.ClientOnServer)
   }
 
-  public emitServer(rpcName: shared.RpcEventName, ...args: unknown[]): Promise<unknown> {
+  public emitServer<K extends keyof IClientServerRpc>(
+    rpcName: K,
+    ...args: Parameters<IClientServerRpc[K]>
+  ): Promise<ReturnType<IClientServerRpc[K]>> {
     return new Promise((resolve, reject) => {
       const serverPending: shared.RemotePendingController =
         this.checkPendingServerEvent(rpcName) ??
@@ -180,12 +187,31 @@ export class Rpc extends shared.SharedRpc {
     webView.on(shared.ClientOnWebViewEvents.CallServerEvent, this.onWebViewCallServerEvent.bind(this))
   }
 
-  public onWebView(rpcName: shared.RpcEventName, handler: shared.UnknownEventHandler): void {
-    this.addHandler(rpcName, shared.RpcHandlerType.ClientOnWebView, handler)
+  public onWebView<K extends keyof IWebViewClientRpc>(
+    rpcName: K,
+    handler: (...args: Parameters<IWebViewClientRpc[K]>) => ReturnType<IWebViewClientRpc[K]>,
+  ): void {
+    if (!this.webView)
+      throw new Error("WebView is not added")
+
+    this.addHandler(rpcName, shared.RpcHandlerType.ClientOnWebView, handler as shared.UnknownEventHandler)
   }
 
-  public emitWebView(rpcName: shared.RpcEventName, ...args: unknown[]): Promise<unknown> {
+  public offWebView<K extends keyof IWebViewClientRpc>(rpcName: K): void {
+    if (!this.webView)
+      throw new Error("WebView is not added")
+
+    this.removeHandler(rpcName, shared.RpcHandlerType.ClientOnWebView)
+  }
+
+  public emitWebView<K extends keyof IClientWebViewRpc>(
+    rpcName: K,
+    ...args: Parameters<IClientWebViewRpc[K]>[]
+  ): Promise<ReturnType<IClientWebViewRpc[K]>> {
     return new Promise((resolve, reject) => {
+      if (!this.webView)
+        return reject(new Error("WebView is not added"))
+
       const webViewPending: shared.RemotePendingController =
         this.checkPendingWebViewEvent(rpcName) ??
         new shared.RemotePendingController({

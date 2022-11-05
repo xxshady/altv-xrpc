@@ -1,0 +1,11 @@
+{
+  "name": "altv-xrpc-shared-types",
+  "version": "0.0.4",
+  "types": "types/types/index.d.ts",
+  "files": [
+    "types/**/*"
+  ],
+  "author": "xshady",
+  "license": "MIT",
+  "type": "module"
+}
