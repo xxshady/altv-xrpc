@@ -1,5 +1,7 @@
 # altv-xrpc
 
+Special thanks ❤️ to [innxz](https://github.com/innxz) for financially supporting me and this library
+
 ## Installation
 
 ### yarn
