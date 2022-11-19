@@ -114,7 +114,7 @@ export class Rpc extends shared.SharedRpc {
 
   public emitClient<K extends keyof IWebViewClientRpc>(
     rpcName: K,
-    ...args: Parameters<IWebViewClientRpc[K]>[]
+    ...args: Parameters<IWebViewClientRpc[K]>
   ): Promise<ReturnType<IWebViewClientRpc[K]>> {
     return new Promise((resolve, reject) => {
       const clientPending: shared.RemotePendingController =
@@ -138,7 +138,7 @@ export class Rpc extends shared.SharedRpc {
 
   public emitServer<K extends keyof IWebViewServerRpc>(
     rpcName: K,
-    ...args: Parameters<IWebViewServerRpc[K]>[]
+    ...args: Parameters<IWebViewServerRpc[K]>
   ): Promise<ReturnType<IWebViewServerRpc[K]>> {
     return new Promise((resolve, reject) => {
       const clientPending: shared.RemotePendingController =

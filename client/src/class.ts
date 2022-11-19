@@ -206,7 +206,7 @@ export class Rpc extends shared.SharedRpc {
 
   public emitWebView<K extends keyof IClientWebViewRpc>(
     rpcName: K,
-    ...args: Parameters<IClientWebViewRpc[K]>[]
+    ...args: Parameters<IClientWebViewRpc[K]>
   ): Promise<ReturnType<IClientWebViewRpc[K]>> {
     return new Promise((resolve, reject) => {
       if (!this.webView)
