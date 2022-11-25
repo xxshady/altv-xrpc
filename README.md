@@ -2,7 +2,7 @@
 
 Special thanks ❤️ to [innxz](https://github.com/innxz) for financially supporting me and this library
 
-A  library that implements **strict** request-response events (rpc) and made for *real* TypeScript users.
+altv-xrpc is a library that implements **strict** request-response events (rpc) and made for *real* TypeScript users
 
 ## Installation
 
