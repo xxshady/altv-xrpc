@@ -2,6 +2,8 @@
 
 Special thanks ❤️ to [innxz](https://github.com/innxz) for financially supporting me and this library
 
+![Code_8rnWxzdSIY](https://user-images.githubusercontent.com/54737754/208540996-e7862b93-2b85-4d4d-9217-a68924d0b50d.gif)
+
 altv-xrpc is a library that implements **strict** request-response events (rpc) and made for *real* TypeScript users
 
 ## Installation
