@@ -31,6 +31,7 @@
         "dev:client": "cd client && yarn dev",
         "dev:webview": "cd webview && yarn dev",
         "dev": "concurrently 'yarn:dev:*'",
-        "publ": "lerna run build && lerna publish"
+        "build": "lerna run build",
+        "publ": "yarn build && lerna publish"
     }
 }

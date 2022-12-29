@@ -94,3 +94,63 @@ rpc.emitServer("example", 123)
   .then(result => console.log("server rpc result:", result))
   .catch(e => console.error("something went wrong", e.stack))
 ```
+
+
+## Custom events API
+
+By default rpc uses alt:V events API (`alt.emitServer`, `alt.onClient`, etc.), but it's possible to override this behavior, for example if you want to add some protection.
+
+client-side
+```ts
+import { Rpc } from "altv-xrpc-client"
+
+const myWebView = new alt.WebView(...)
+
+const rpc = new Rpc({
+  eventApi: {
+    onServer: (event, handler) => {
+      alt.log('rpc called onServer (add event handler) with params:', [event, handler])
+      alt.onServer(event, handler)
+    },
+    offServer: (event, handler) => {
+      alt.log('rpc called offServer (remove event handler) with params:', [event, handler])
+      alt.offServer(event, handler)
+    },
+    emitServer: (event, ...args) => {
+      alt.log('rpc called emitServer with params:', [event, args])
+      alt.emitServer(event, ...args)
+    },
+  },
+  webView: {
+    on: (event, handler) => {
+      alt.log('rpc called WebView on method (add event handler) with params:', [event, handler])
+      myWebView.on(event, handler)
+    },
+    emit: (event, ...args) => {
+      alt.log('rpc called WebView emit method with params:', [event, args])
+      myWebView.emit(event, handler)
+    },
+  }
+})
+```
+
+server-side
+```ts
+import { Rpc } from "altv-xrpc-server"
+
+const rpc = new Rpc({
+  eventApi: {
+    onClient: (event, handler) => {
+      alt.log('rpc called onClient (add event handler) with params:', [event, handler])
+      alt.onClient(event, handler)
+    },
+    offClient: (event, handler) => {
+      alt.log('rpc called offClient (remove event handler) with params:', [event, handler])
+      alt.offClient(event, handler)
+    },
+    emitClient: (player, event, ...args) => {
+      alt.log('rpc called emitClient with params:', [player, event, args])
+      alt.emitClient(player, event, ...args)
+    },
+  },
+```

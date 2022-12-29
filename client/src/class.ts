@@ -1,23 +1,38 @@
-import * as alt from "alt-client"
 import * as shared from "altv-xrpc-shared"
-import type { IClientServerRpc, IClientWebViewRpc, IServerClientRpc, IWebViewClientRpc } from "altv-xrpc-shared-types"
+import type {
+  IClientServerRpc,
+  IClientWebViewRpc,
+  IServerClientRpc,
+  IWebViewClientRpc,
+} from "altv-xrpc-shared-types"
 import { logger, logObject } from "./logger"
-import type { RemotePendingEvents } from "./types"
+import type { IEventApi, IWebView, RemotePendingEvents, ToggleServerEventHandler } from "./types"
 
 export class Rpc extends shared.SharedRpc {
+  private static instance: Rpc | null = null
+
   private readonly serverPendingEvents: RemotePendingEvents = new Map()
   private readonly webViewPendingEvents: RemotePendingEvents = new Map()
-  private webView: alt.WebView | null = null
+  private webView: IWebView | null = null
 
-  constructor() {
+  private readonly eventApi: IEventApi
+  private serverEventHandlers: Partial<shared.IClientOnServerEvent> = {}
+
+  constructor({ eventApi, webView }: { eventApi: IEventApi; webView?: IWebView }) {
     super(logObject)
 
-    // TODO: add ts check for events
-    alt.onServer(shared.ClientOnServerEvents.CallEvent, this.onServerCallEvent.bind(this))
-    alt.onServer(shared.ClientOnServerEvents.EventResponse, this.onServerEventResponse.bind(this))
+    // TODO: maybe add removing of event handlers from previous webview
+    if (Rpc.instance?.webView)
+      throw new Error("[altv-xrpc] Cannot create a new rpc instance if the previous one uses webview")
 
-    alt.onServer(shared.ClientOnServerEvents.CallWebViewEvent, this.onServerCallWebViewEvent.bind(this))
-    alt.onServer(shared.ClientOnServerEvents.WebViewEventResponse, this.onServerWebViewEventResponse.bind(this))
+    this.eventApi = eventApi
+
+    if (Rpc.instance) Rpc.instance.toggleServerEventHandlers(false)
+    this.toggleServerEventHandlers(true)
+    Rpc.instance = this
+
+    if (webView)
+      this.useWebView(webView)
   }
 
   private async onServerCallEvent(rpcName: shared.RpcEventName, args: unknown[]): Promise<void> {
@@ -111,7 +126,7 @@ export class Rpc extends shared.SharedRpc {
     eventName: K,
     args: Parameters<shared.IServerOnClientEvent[K]>,
   ): void {
-    alt.emitServer(eventName, ...args)
+    this.eventApi.emitServer(eventName, ...args)
   }
 
   private emitWebViewRpcEvent <K extends keyof shared.IWebViewOnClientEvent>(
@@ -177,10 +192,10 @@ export class Rpc extends shared.SharedRpc {
     })
   }
 
-  public useWebView(webView: alt.WebView): void {
+  public useWebView(webView: IWebView): void {
     if (this.webView) throw new Error("WebView already added")
-
     this.webView = webView
+
     webView.on(shared.ClientOnWebViewEvents.ServerEventResponse, this.onWebViewServerEventResponse.bind(this))
     webView.on(shared.ClientOnWebViewEvents.CallEvent, this.onWebViewCallEvent.bind(this))
     webView.on(shared.ClientOnWebViewEvents.EventResponse, this.onWebViewEventResponse.bind(this))
@@ -232,5 +247,32 @@ export class Rpc extends shared.SharedRpc {
       this.webViewPendingEvents.set(rpcName, webViewPending)
       this.emitWebViewRpcEvent(shared.WebViewOnClientEvents.CallEvent, [rpcName, args])
     })
+  }
+
+  private toggleServerEventHandlers(enable: boolean): void {
+    if (!enable) {
+      for (const name in this.serverEventHandlers) {
+        this.eventApi.offServer(
+          name as keyof shared.IClientOnServerEvent,
+
+          // fuck off
+          // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+          this.serverEventHandlers[name as keyof shared.IClientOnServerEvent]!,
+        )
+      }
+
+      this.serverEventHandlers = {}
+    }
+    else {
+      const registerEvent: ToggleServerEventHandler = (event, handler) => {
+        this.eventApi.onServer(event, handler)
+        this.serverEventHandlers[event] = handler
+      }
+
+      registerEvent(shared.ClientOnServerEvents.CallEvent, this.onServerCallEvent.bind(this))
+      registerEvent(shared.ClientOnServerEvents.EventResponse, this.onServerEventResponse.bind(this))
+      registerEvent(shared.ClientOnServerEvents.CallWebViewEvent, this.onServerCallWebViewEvent.bind(this))
+      registerEvent(shared.ClientOnServerEvents.WebViewEventResponse, this.onServerWebViewEventResponse.bind(this))
+    }
   }
 }

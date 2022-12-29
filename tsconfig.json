@@ -12,6 +12,7 @@
     "isolatedModules": true,
     "declaration": true,
     "useUnknownInCatchVariables": false,
+    "exactOptionalPropertyTypes": true,
     "typeRoots": [
       "./node_modules/@altv",
       "./types",

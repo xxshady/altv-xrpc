@@ -1,6 +1,10 @@
 import * as alt from "alt-server"
 import * as shared from "altv-xrpc-shared"
-import type { PlayerPendingEvents } from "./types"
+import type {
+  IEventApi,
+  PlayerPendingEvents,
+  ServerOnClientEvent,
+} from "./types"
 import { nextTickAsync } from "./helpers"
 import { logger, logObject } from "./logger"
 import type {
@@ -9,21 +13,26 @@ import type {
   IServerClientRpc,
   IWebViewServerRpc,
 } from "altv-xrpc-shared-types"
+import type { ToggleEventHandler } from "../dist"
 
 export class Rpc extends shared.SharedRpc {
+  private static instance: Rpc | null = null
+
   private readonly clientPendingEvents: Map<alt.Player, PlayerPendingEvents> = new Map()
   private readonly webViewPendingEvents: Map<alt.Player, PlayerPendingEvents> = new Map()
 
-  constructor() {
+  private readonly eventApi: IEventApi
+  private clientEventHandlers: Partial<ServerOnClientEvent> = {}
+
+  constructor({ eventApi }: { eventApi: IEventApi }) {
     super(logObject)
 
-    alt.on("playerDisconnect", this.onPlayerDisconnect.bind(this))
+    this.eventApi = eventApi
+    if (Rpc.instance) Rpc.instance.toggleClientEventHandlers(false)
+    this.toggleClientEventHandlers(true)
+    Rpc.instance = this
 
-    // TODO: add ts check for events
-    alt.onClient(shared.ServerOnClientEvents.CallEvent, this.onClientCallEvent.bind(this))
-    alt.onClient(shared.ServerOnClientEvents.EventResponse, this.onClientEventResponse.bind(this))
-    alt.onClient(shared.ServerOnClientEvents.WebViewEventResponse, this.onWebViewEventResponse.bind(this))
-    alt.onClient(shared.ServerOnClientEvents.CallEventFromWebView, this.onWebViewCallEvent.bind(this))
+    alt.on("playerDisconnect", this.onPlayerDisconnect.bind(this))
   }
 
   private async onPlayerDisconnect(player: alt.Player): Promise<void> {
@@ -138,7 +147,7 @@ export class Rpc extends shared.SharedRpc {
     args: Parameters<shared.IClientOnServerEvent[K]>,
   ): void {
     logger.info("emitClientRpcEvent", player.toString(), eventName, args)
-    alt.emitClient(player, eventName, ...args)
+    this.eventApi.emitClient(player, eventName, ...args)
   }
 
   private checkPendingClientEvent(player: alt.Player, rpcName: shared.RpcEventName): PlayerPendingEvents | undefined {
@@ -259,5 +268,31 @@ export class Rpc extends shared.SharedRpc {
         [rpcName, args],
       )
     })
+  }
+
+  private toggleClientEventHandlers(enable: boolean): void {
+    if (!enable) {
+      for (const name in this.clientEventHandlers) {
+        this.eventApi.offClient(
+          name as keyof ServerOnClientEvent,
+
+          // fuck off
+          // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+          this.clientEventHandlers[name as keyof ServerOnClientEvent]!,
+        )
+      }
+      this.clientEventHandlers = {}
+    }
+    else {
+      const registerEvent: ToggleEventHandler = (event, handler) => {
+        this.eventApi.onClient(event, handler)
+        this.clientEventHandlers[event] = handler
+      }
+
+      registerEvent(shared.ServerOnClientEvents.CallEvent, this.onClientCallEvent.bind(this))
+      registerEvent(shared.ServerOnClientEvents.EventResponse, this.onClientEventResponse.bind(this))
+      registerEvent(shared.ServerOnClientEvents.WebViewEventResponse, this.onWebViewEventResponse.bind(this))
+      registerEvent(shared.ServerOnClientEvents.CallEventFromWebView, this.onWebViewCallEvent.bind(this))
+    }
   }
 }
