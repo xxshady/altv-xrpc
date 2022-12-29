@@ -98,7 +98,7 @@ rpc.emitServer("example", 123)
 
 ## Custom events API
 
-By default this library uses alt:V events API (`alt.emitServer`, `alt.onClient`, etc.), but it's possible to override this behavior, for example if you want to add some protection.
+By default this library uses alt:V events API (`alt.emitServer`, `alt.onClient`, etc.), but it's possible to override this behavior, for example if you want to add some protection
 
 client-side
 ```ts
@@ -133,7 +133,7 @@ const rpc = new Rpc({
   }
 })
 
-// will output to the client console 'rpc called emitServer with params: ["example", [123]]'
+// Will output to the client console 'rpc called emitServer with params: ["example", [123]]'
 rpc.emitServer("example", 123) 
 ```
 
@@ -158,6 +158,14 @@ const rpc = new Rpc({
   }
 })
 
-// will output to the server console 'rpc called onClient with params: ["example", <function>]'
-rpc.onClient("example", (player, data) => {})
+
+alt.on("playerConnect", (player) => {
+  rpc.emitClient(player, "example", 123)
+  // Output to the server console:
+  // rpc called emitClient with params: [
+  //   Player {},
+  //   'rpc:callEvent',
+  //   [ 'test', [ 123, 456 ] ]
+  // ]
+})
 ```
