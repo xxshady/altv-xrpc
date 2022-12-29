@@ -98,7 +98,7 @@ rpc.emitServer("example", 123)
 
 ## Custom events API
 
-By default rpc uses alt:V events API (`alt.emitServer`, `alt.onClient`, etc.), but it's possible to override this behavior, for example if you want to add some protection.
+By default this library uses alt:V events API (`alt.emitServer`, `alt.onClient`, etc.), but it's possible to override this behavior, for example if you want to add some protection.
 
 client-side
 ```ts
