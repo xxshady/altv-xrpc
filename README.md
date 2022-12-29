@@ -132,6 +132,9 @@ const rpc = new Rpc({
     },
   }
 })
+
+// will output to the client console 'rpc called emitServer with params: ["example", [123]]'
+rpc.emitServer("example", 123) 
 ```
 
 server-side
@@ -152,5 +155,9 @@ const rpc = new Rpc({
       alt.log('rpc called emitClient with params:', [player, event, args])
       alt.emitClient(player, event, ...args)
     },
-  },
+  }
+})
+
+// will output to the server console 'rpc called onClient with params: ["example", <function>]'
+rpc.onClient("example", (player, data) => {})
 ```
