@@ -133,7 +133,7 @@ const rpc = new Rpc({
   }
 })
 
-// Will output to the client console 'rpc called emitServer with params: ["example", [123]]'
+// Will output to the client console 'rpc called emitServer with params: ['rpc:callEvent', [ 'example', [ 123 ] ] ]'
 rpc.emitServer("example", 123) 
 ```
 
@@ -165,7 +165,7 @@ alt.on("playerConnect", (player) => {
   // rpc called emitClient with params: [
   //   Player {},
   //   'rpc:callEvent',
-  //   [ 'test', [ 123, 456 ] ]
+  //   [ 'test', [ 123 ] ]
   // ]
 })
 ```
