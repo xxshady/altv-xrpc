@@ -14,6 +14,7 @@ altv-xrpc is a library that implements **strict** request-response events (rpc) 
 yarn add altv-xrpc-server
 yarn add altv-xrpc-client
 yarn add altv-xrpc-webview
+yarn add altv-xrpc-shared
 yarn add altv-xrpc-shared-types  // advanced typescript support
 ```
 
@@ -23,6 +24,7 @@ yarn add altv-xrpc-shared-types  // advanced typescript support
 npm install altv-xrpc-server
 npm install altv-xrpc-client
 npm install altv-xrpc-webview
+npm install altv-xrpc-shared
 npm install altv-xrpc-shared-types // advanced typescript support
 ```
 
