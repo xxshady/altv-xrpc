@@ -180,6 +180,8 @@ Server-side hooks API
 
 Easier verification of everything the client sends to the server (client->server rpc call, server->client rpc response).
 
+> webview<->server rpcs are not supported yet
+
 server-side
 
 ```ts
