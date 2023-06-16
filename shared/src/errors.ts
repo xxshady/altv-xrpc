@@ -7,6 +7,8 @@ export enum ErrorCodes {
   HandlerNotRegistered,
   PlayerDisconnected,
   WebViewNotAdded,
+  InvalidClientServerArgsOrPlayer,
+  InvalidServerClientResponse,
 }
 
 export class RpcError extends Error {

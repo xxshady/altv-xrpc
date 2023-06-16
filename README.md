@@ -33,6 +33,7 @@ npm install altv-xrpc-shared-types // advanced typescript support
 Mini-example of advanced typescript support (`altv-xrpc-shared-types`) usage is [here](/example)
 
 ### client
+
 ```ts
 import * as alt from "alt-client"
 import { rpc } from "altv-xrpc-client"
@@ -60,6 +61,7 @@ rpc.emitWebView("example", 123)
 ```
 
 ### server
+
 ```ts
 import * as alt from "alt-server"
 import { rpc } from "altv-xrpc-server"
@@ -83,6 +85,7 @@ rpc.emitWebView(alt.Player.all[0], "example", 123)
 ```
 
 ### webview
+
 ```ts
 import { rpc } from "altv-xrpc-webview"
 
@@ -97,12 +100,12 @@ rpc.emitServer("example", 123)
   .catch(e => console.error("something went wrong", e.stack))
 ```
 
-
 ## Custom events API
 
 By default this library uses alt:V events API (`alt.emitServer`, `alt.onClient`, etc.), but it's possible to override this behavior, for example if you want to add some protection
 
 client-side
+
 ```ts
 import { Rpc } from "altv-xrpc-client"
 
@@ -111,50 +114,51 @@ const myWebView = new alt.WebView(...)
 const rpc = new Rpc({
   eventApi: {
     onServer: (event, handler) => {
-      alt.log('rpc called onServer (add event handler) with params:', [event, handler])
+      alt.log("rpc called onServer (add event handler) with params:", [event, handler])
       alt.onServer(event, handler)
     },
     offServer: (event, handler) => {
-      alt.log('rpc called offServer (remove event handler) with params:', [event, handler])
+      alt.log("rpc called offServer (remove event handler) with params:", [event, handler])
       alt.offServer(event, handler)
     },
     emitServer: (event, ...args) => {
-      alt.log('rpc called emitServer with params:', [event, args])
+      alt.log("rpc called emitServer with params:", [event, args])
       alt.emitServer(event, ...args)
     },
   },
   webView: {
     on: (event, handler) => {
-      alt.log('rpc called WebView on method (add event handler) with params:', [event, handler])
+      alt.log("rpc called WebView on method (add event handler) with params:", [event, handler])
       myWebView.on(event, handler)
     },
     emit: (event, ...args) => {
-      alt.log('rpc called WebView emit method with params:', [event, args])
+      alt.log("rpc called WebView emit method with params:", [event, args])
       myWebView.emit(event, handler)
     },
   }
 })
 
-// Will output to the client console 'rpc called emitServer with params: ['rpc:callEvent', [ 'example', [ 123 ] ] ]'
+// Will output to the client console "rpc called emitServer with params: ["rpc:callEvent", [ "example", [ 123 ] ] ]"
 rpc.emitServer("example", 123) 
 ```
 
 server-side
+
 ```ts
 import { Rpc } from "altv-xrpc-server"
 
 const rpc = new Rpc({
   eventApi: {
     onClient: (event, handler) => {
-      alt.log('rpc called onClient (add event handler) with params:', [event, handler])
+      alt.log("rpc called onClient (add event handler) with params:", [event, handler])
       alt.onClient(event, handler)
     },
     offClient: (event, handler) => {
-      alt.log('rpc called offClient (remove event handler) with params:', [event, handler])
+      alt.log("rpc called offClient (remove event handler) with params:", [event, handler])
       alt.offClient(event, handler)
     },
     emitClient: (player, event, ...args) => {
-      alt.log('rpc called emitClient with params:', [player, event, args])
+      alt.log("rpc called emitClient with params:", [player, event, args])
       alt.emitClient(player, event, ...args)
     },
   }
@@ -166,8 +170,77 @@ alt.on("playerConnect", (player) => {
   // Output to the server console:
   // rpc called emitClient with params: [
   //   Player {},
-  //   'rpc:callEvent',
-  //   [ 'test', [ 123 ] ]
+  //   "rpc:callEvent",
+  //   [ "test", [ 123 ] ]
   // ]
 })
+```
+
+Server-side hooks API
+
+Easier verification of everything the client sends to the server (client->server rpc call, server->client rpc response).
+
+server-side
+
+```ts
+import { Rpc } from "altv-xrpc-server"
+
+const myClientServerRpcArgs = {
+  a: "must be number",
+  b: "must be string",
+}
+
+const myServerClientResponses = {
+  a: "must be number",
+  b: "must be string",
+}
+
+const rpc = new Rpc({
+  hooks: {
+    // server-side rpc.onClient player & args
+    clientServerCall(player, rpcName, args) {
+      const expected = myClientServerRpcArgs[rpcName as keyof typeof myClientServerRpcArgs]
+      const [value] = args
+      if (expected === "must be number" && typeof value !== "number") {
+        return null // will send `InvalidClientServerArgsOrPlayer` error code to client
+      }
+      if (expected === "must be string" && typeof value !== "string") {
+        return null
+      }
+
+      return {
+        player,
+        args
+      }
+    },
+
+    // server-side rpc.emitClient response (returned value)
+    serverClientResponse(player, rpcName, response) {
+      const expected = myServerClientResponses[rpcName as keyof typeof myServerClientResponses]
+      if (expected === "must be number" && typeof response !== "number") {
+        return null // will reject rpc.emitClient promise with `InvalidServerClientResponse` error code
+      }
+      if (expected === "must be string" && typeof response !== "string") {
+        return null
+      }
+
+      return { response }
+    },
+  }
+})
+
+// serverClientResponse
+// if client sends not string this promise will be rejected
+const response = await rpc.emitClient(player, "b")
+
+```
+
+client-side
+
+```ts
+import { rpc } from "altv-xrpc-client"
+
+// will fail
+// a: "must be number"
+const response = await rpc.emitServer("a", null)
 ```

@@ -2,8 +2,10 @@ import * as alt from "alt-server"
 import * as shared from "altv-xrpc-shared"
 import type {
   IEventApi,
+  IHooks,
   PlayerPendingEvents,
   ServerOnClientEvent,
+  ToggleEventHandler,
 } from "./types"
 import { nextTickAsync } from "./helpers"
 import { logger, logObject } from "./logger"
@@ -13,7 +15,6 @@ import type {
   IServerClientRpc,
   IWebViewServerRpc,
 } from "altv-xrpc-shared-types"
-import type { ToggleEventHandler } from "../dist"
 
 export class Rpc extends shared.SharedRpc {
   private static instance: Rpc | null = null
@@ -22,12 +23,24 @@ export class Rpc extends shared.SharedRpc {
   private readonly webViewPendingEvents: Map<alt.Player, PlayerPendingEvents> = new Map()
 
   private readonly eventApi: IEventApi
+  private readonly hooks: IHooks
   private clientEventHandlers: Partial<ServerOnClientEvent> = {}
 
-  constructor({ eventApi }: { eventApi: IEventApi }) {
+  constructor({
+    eventApi = {
+      emitClient: alt.emitClient,
+      offClient: alt.offClient,
+      onClient: alt.onClient,
+    },
+    hooks = {},
+  }: {
+    eventApi?: IEventApi
+    hooks?: IHooks
+  }) {
     super(logObject)
 
     this.eventApi = eventApi
+    this.hooks = hooks
     if (Rpc.instance) Rpc.instance.toggleClientEventHandlers(false)
     this.toggleClientEventHandlers(true)
     Rpc.instance = this
@@ -74,10 +87,28 @@ export class Rpc extends shared.SharedRpc {
   private async onClientCallEvent(player: alt.Player, rpcName: shared.RpcEventName, args: unknown[]): Promise<void> {
     logger.info("onClientCallEvent", "player:", player.toString(), rpcName)
 
+    let callingArgs: unknown[]
+    const { clientServerCall } = this.hooks
+    if (clientServerCall) {
+      const hookedCall = clientServerCall(player, rpcName, args)
+      if (!hookedCall) {
+        logger.error(`[rpc] client->server rpc name: "${rpcName}" call failed, "clientServerCall" hook returned null (InvalidClientServerArgsOrPlayer)`)
+        this.emitClientRpcEvent(
+          player,
+          shared.ClientOnServerEvents.EventResponse,
+          [rpcName, shared.ErrorCodes.InvalidClientServerArgsOrPlayer, null],
+        )
+        return
+      }
+
+      callingArgs = [hookedCall.player, ...hookedCall.args]
+    }
+    else callingArgs = [player, ...args]
+
     const params = await this.callHandlerFromRemoteSide(
       rpcName,
       shared.RpcHandlerType.ServerOnClient,
-      [player, ...args],
+      callingArgs,
     )
 
     logger.info("callHandlerFromRemoteSide params return:", params)
@@ -92,18 +123,33 @@ export class Rpc extends shared.SharedRpc {
     player: alt.Player,
     rpcName: shared.RpcEventName,
     error: shared.ErrorCodes | null,
-    result: unknown,
+    rawResponse: unknown,
   ): void {
     const clientPending = this.clientPendingEvents.get(player)?.get(rpcName)
 
     if (!clientPending) {
-      logger.warn(`[onClientEventResponse] rpc name: "${rpcName}" received expired response: ${result}`)
+      logger.warn(`[onClientEventResponse] rpc name: "${rpcName}" received expired response: ${rawResponse}`)
       return
     }
 
+    let response: unknown
+    const { serverClientResponse } = this.hooks
+    if (serverClientResponse) {
+      const hookedResponse = serverClientResponse(player, rpcName, rawResponse)
+      if (hookedResponse == null) {
+        clientPending.reject(
+          `rpc.emitClient rpc name: "${rpcName}" failed, player id: ${player.id}`,
+          this.ErrorCodes.InvalidServerClientResponse,
+        )
+        return
+      }
+      response = hookedResponse.response
+    }
+    else response = rawResponse
+
     error
       ? clientPending.reject(`rpc.emitClient rpc name: "${rpcName}" failed, player id: ${player.id}`, error)
-      : clientPending.resolve(result)
+      : clientPending.resolve(response)
   }
 
   private onWebViewEventResponse(

@@ -26,3 +26,11 @@ export interface IEventApi {
     ...args: Parameters<IClientOnServerEvent[K]>
   ) => void
 }
+
+// return value of rpc handler
+type Response = unknown
+
+export interface IHooks {
+  clientServerCall?: (player: alt.Player, rpcName: RpcEventName, args: unknown[]) => { player: unknown; args: unknown[] } | null
+  serverClientResponse?: (player: alt.Player, rpcName: RpcEventName, response: Response) => { response: Response } | null
+}
