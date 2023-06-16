@@ -1,6 +1,6 @@
 {
   "name": "altv-xrpc-server",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "author": "xshady",
@@ -16,5 +16,6 @@
   "type": "module",
   "peerDependencies": {
     "altv-xrpc-shared-types": "latest"
-  }
+  },
+  "gitHead": "239bf64500859ae74af41626064da613bbe530a1"
 }

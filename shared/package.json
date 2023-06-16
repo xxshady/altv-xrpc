@@ -1,6 +1,6 @@
 {
   "name": "altv-xrpc-shared",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "author": "xshady",
@@ -13,5 +13,6 @@
     "build": "node --es-module-specifier-resolution=node build.js",
     "types": "dts-bundle-generator --disable-symlinks-following -o dist/index.d.ts src/index.ts"
   },
-  "type": "module"
+  "type": "module",
+  "gitHead": "239bf64500859ae74af41626064da613bbe530a1"
 }

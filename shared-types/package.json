@@ -1,11 +1,12 @@
 {
   "name": "altv-xrpc-shared-types",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "types": "types/types/index.d.ts",
   "files": [
     "types/**/*"
   ],
   "author": "xshady",
   "license": "MIT",
-  "type": "module"
+  "type": "module",
+  "gitHead": "239bf64500859ae74af41626064da613bbe530a1"
 }
