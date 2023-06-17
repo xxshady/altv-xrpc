@@ -92,7 +92,7 @@ export class Rpc extends shared.SharedRpc {
     if (clientServerCall) {
       const hookedCall = clientServerCall(player, rpcName, args)
       if (!hookedCall) {
-        logger.error(`[rpc] client->server rpc name: "${rpcName}" call failed, "clientServerCall" hook returned null (InvalidClientServerArgsOrPlayer)`)
+        logger.error(`client->server rpc name: "${rpcName}" call failed, "clientServerCall" hook returned null (InvalidClientServerArgsOrPlayer)`)
         this.emitClientRpcEvent(
           player,
           shared.ClientOnServerEvents.EventResponse,
