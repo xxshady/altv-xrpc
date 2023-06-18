@@ -176,7 +176,7 @@ alt.on("playerConnect", (player) => {
 })
 ```
 
-Server-side hooks API
+## Server-side hooks API
 
 Easier verification of everything the client sends to the server (client->server rpc call, server->client rpc response).
 
