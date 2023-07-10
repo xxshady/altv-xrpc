@@ -159,4 +159,10 @@ export class Rpc extends shared.SharedRpc {
       alt.emit(shared.ClientOnWebViewEvents.CallServerEvent, rpcName, args)
     })
   }
+
+  public reset(): void {
+    this.clientPendingEvents.clear()
+    this.serverPendingEvents.clear()
+    this.handlers.clear()
+  }
 }
