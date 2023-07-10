@@ -246,3 +246,21 @@ import { rpc } from "altv-xrpc-client"
 // a: "must be number"
 const response = await rpc.emitServer("a", null)
 ```
+
+## WebView reset
+
+For cases where `AlreadyPending` errors occur during hot reloads in browser.
+
+Example usage for [Vite HMR](https://vitejs.dev/guide/api-hmr.html).
+
+```ts
+import { rpc } from 'altv-xrpc-webview'
+
+const hotReload = (import.meta as any).hot
+if (hotReload) {
+  hotReload.on('vite:beforeUpdate', (newModule: unknown) => {
+    if (!newModule) return
+    rpc.reset()
+  })
+}
+```
