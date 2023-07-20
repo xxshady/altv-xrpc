@@ -32,7 +32,7 @@ export class RemotePendingController {
   private initTimer(): number {
     return setTimeout(() => {
       this.timer = null
-      this.reject(`rpc name: "${this.rpcName}" call duration was too long > ${this.timeout}`, ErrorCodes.Expired)
+      this.reject(`rpc name: "${this.rpcName}" call duration was too long > ${this.timeout} ms`, ErrorCodes.Expired)
     }, this.timeout)
   }
 
