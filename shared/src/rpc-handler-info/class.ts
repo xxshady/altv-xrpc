@@ -1,4 +1,3 @@
-import { defaultTimeout } from "../constants"
 import { ErrorCodes } from "../errors"
 import { Logger } from "../logger"
 import type {
@@ -39,7 +38,8 @@ export class RpcHandlerInfo {
   }
 
   public async startPendingHandler(
-    ...callHandlerArgs: unknown[]
+    callHandlerArgs: unknown[],
+    timeout: number,
   ): Promise<RpcHandlerResult> {
     const errorStartPending = this.setPending(true)
 
@@ -52,7 +52,7 @@ export class RpcHandlerInfo {
 
     this.setPending(false)
 
-    if (handlerCallDelay > defaultTimeout)
+    if (handlerCallDelay > timeout)
       return ErrorCodes.Expired
 
     return handlerResult

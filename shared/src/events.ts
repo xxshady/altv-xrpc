@@ -31,26 +31,26 @@ export enum ClientOnWebViewEvents {
 
 // between two direct-connected sides (e.g. client-server, client-webview, but not server-webview!!)
 export interface ISharedOnRemoteEvent {
-  "rpc:callEvent"(rpcName: RpcEventName, args: unknown[]): Promise<void>
+  "rpc:callEvent"(rpcName: RpcEventName, args: unknown[], timeoutMs: number | null): Promise<void>
   "rpc:eventResponse"(rpcName: RpcEventName, error: ErrorCodes | null, result: unknown): void
 }
 
 export interface IServerOnClientEvent extends ISharedOnRemoteEvent {
   [ServerOnClientEvents.WebViewEventResponse](rpcName: RpcEventName, error: ErrorCodes | null, result?: unknown): void
-  [ServerOnClientEvents.CallEventFromWebView](rpcName: RpcEventName, args: unknown[]): Promise<void>
+  [ServerOnClientEvents.CallEventFromWebView](rpcName: RpcEventName, args: unknown[], timeoutMs: number | null): Promise<void>
 }
 
 export interface IClientOnServerEvent extends ISharedOnRemoteEvent {
-  [ClientOnServerEvents.CallWebViewEvent](rpcName: RpcEventName, args: unknown[]): void
+  [ClientOnServerEvents.CallWebViewEvent](rpcName: RpcEventName, args: unknown[], timeoutMs: number | null): void
   [ClientOnServerEvents.WebViewEventResponse](rpcName: RpcEventName, error: ErrorCodes | null, result?: unknown): void
 }
 
 export interface IWebViewOnClientEvent extends ISharedOnRemoteEvent {
-  [WebViewOnClientEvents.CallEventFromServer](rpcName: RpcEventName, args: unknown[]): void
+  [WebViewOnClientEvents.CallEventFromServer](rpcName: RpcEventName, args: unknown[], timeoutMs: number | null): void
   [WebViewOnClientEvents.ServerEventResponse](rpcName: RpcEventName, error: ErrorCodes | null, result?: unknown): void
 }
 
 export interface IClientOnWebViewEvent extends ISharedOnRemoteEvent {
-  [ClientOnWebViewEvents.CallServerEvent](rpcName: RpcEventName, args: unknown[]): void
+  [ClientOnWebViewEvents.CallServerEvent](rpcName: RpcEventName, args: unknown[], timeoutMs: number | null): void
   [ClientOnWebViewEvents.ServerEventResponse](rpcName: RpcEventName, error: ErrorCodes | null, result?: unknown): void
 }

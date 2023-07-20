@@ -84,7 +84,12 @@ export class Rpc extends shared.SharedRpc {
     }
   }
 
-  private async onClientCallEvent(player: alt.Player, rpcName: shared.RpcEventName, args: unknown[]): Promise<void> {
+  private async onClientCallEvent(
+    player: alt.Player,
+    rpcName: shared.RpcEventName,
+    args: unknown[],
+    timeoutMs: number | null,
+  ): Promise<void> {
     logger.info("onClientCallEvent", "player:", player.toString(), rpcName)
 
     let callingArgs: unknown[]
@@ -109,6 +114,7 @@ export class Rpc extends shared.SharedRpc {
       rpcName,
       shared.RpcHandlerType.ServerOnClient,
       callingArgs,
+      timeoutMs ?? this.defaultTimeout,
     )
 
     logger.info("callHandlerFromRemoteSide params return:", params)
@@ -170,13 +176,19 @@ export class Rpc extends shared.SharedRpc {
       : clientPending.resolve(result)
   }
 
-  private async onWebViewCallEvent(player: alt.Player, rpcName: shared.RpcEventName, args: unknown[]): Promise<void> {
+  private async onWebViewCallEvent(
+    player: alt.Player,
+    rpcName: shared.RpcEventName,
+    args: unknown[],
+    timeoutMs: number | null,
+  ): Promise<void> {
     logger.info("onWebViewCallEvent", "player:", player.toString(), "rpc:", rpcName)
 
     const params = await this.callHandlerFromRemoteSide(
       rpcName,
       shared.RpcHandlerType.ServerOnWebView,
       [player, ...args],
+      timeoutMs ?? this.defaultTimeout,
     )
 
     logger.info("callHandlerFromRemoteSide params return:", params)
@@ -214,6 +226,88 @@ export class Rpc extends shared.SharedRpc {
     return playerPendingEvents
   }
 
+  private emitClientFull<K extends keyof IServerWebViewRpc>(
+    player: alt.Player,
+    rpcName: K,
+    timeoutMs: number | null,
+    args: Parameters<IServerWebViewRpc[K]>,
+  ): Promise<ReturnType<IServerWebViewRpc[K]>> {
+    return new Promise((resolve, reject) => {
+      if (!player.valid) {
+        reject(new shared.RpcError(`rpc name: "${rpcName}"`, this.ErrorCodes.PlayerDisconnected))
+        return
+      }
+
+      const playerPendingEvents: PlayerPendingEvents = this.checkPendingClientEvent(
+        player,
+        rpcName,
+      ) ?? new Map()
+
+      playerPendingEvents.set(
+        rpcName,
+        new shared.RemotePendingController({
+          rpcName,
+          resolve,
+          reject,
+          finish: (): void => {
+            if (!player.valid) return
+            playerPendingEvents.delete(rpcName)
+          },
+          timeout: timeoutMs ?? this.defaultTimeout,
+        }),
+      )
+
+      this.clientPendingEvents.set(player, playerPendingEvents)
+
+      this.emitClientRpcEvent(
+        player,
+        shared.ClientOnServerEvents.CallEvent,
+        [rpcName, args, timeoutMs],
+      )
+    })
+  }
+
+  private emitWebViewFull<K extends keyof IServerWebViewRpc>(
+    player: alt.Player,
+    rpcName: K,
+    timeoutMs: number | null,
+    args: Parameters<IServerWebViewRpc[K]>,
+  ): Promise<ReturnType<IServerWebViewRpc[K]>> {
+    return new Promise((resolve, reject) => {
+      if (!player.valid) {
+        reject(new shared.RpcError(`webview rpc name: "${rpcName}"`, this.ErrorCodes.PlayerDisconnected))
+        return
+      }
+
+      const webViewPendingEvents: PlayerPendingEvents = this.checkPendingWebViewEvent(
+        player,
+        rpcName,
+      ) ?? new Map()
+
+      webViewPendingEvents.set(
+        rpcName,
+        new shared.RemotePendingController({
+          rpcName,
+          resolve,
+          reject,
+          finish: (): void => {
+            if (!player.valid) return
+            webViewPendingEvents.delete(rpcName)
+          },
+          timeout: timeoutMs ?? this.defaultTimeout,
+        }),
+      )
+
+      this.webViewPendingEvents.set(player, webViewPendingEvents)
+
+      this.emitClientRpcEvent(
+        player,
+        shared.ClientOnServerEvents.CallWebViewEvent,
+        [rpcName, args, timeoutMs],
+      )
+    })
+  }
+
   public onClient<K extends keyof IClientServerRpc>(
     rpcName: K,
     handler: (player: alt.Player, ...args: Parameters<IClientServerRpc[K]>) => shared.ReturnMaybePromise<IClientServerRpc[K]>,
@@ -241,39 +335,16 @@ export class Rpc extends shared.SharedRpc {
     rpcName: K,
     ...args: Parameters<IServerClientRpc[K]>
   ): Promise<ReturnType<IServerClientRpc[K]>> {
-    return new Promise((resolve, reject) => {
-      if (!player.valid) {
-        reject(new shared.RpcError(`rpc name: "${rpcName}"`, this.ErrorCodes.PlayerDisconnected))
-        return
-      }
+    return this.emitClientFull(player, rpcName, null, args)
+  }
 
-      const playerPendingEvents: PlayerPendingEvents = this.checkPendingClientEvent(
-        player,
-        rpcName,
-      ) ?? new Map()
-
-      playerPendingEvents.set(
-        rpcName,
-        new shared.RemotePendingController({
-          rpcName,
-          resolve,
-          reject,
-          finish: (): void => {
-            if (!player.valid) return
-            playerPendingEvents.delete(rpcName)
-          },
-          timeout: this.defaultTimeout,
-        }),
-      )
-
-      this.clientPendingEvents.set(player, playerPendingEvents)
-
-      this.emitClientRpcEvent(
-        player,
-        shared.ClientOnServerEvents.CallEvent,
-        [rpcName, args],
-      )
-    })
+  public emitClientWithTimeout<K extends keyof IServerClientRpc>(
+    player: alt.Player,
+    rpcName: K,
+    timeoutMs: number,
+    ...args: Parameters<IServerClientRpc[K]>
+  ): Promise<ReturnType<IServerClientRpc[K]>> {
+    return this.emitClientFull(player, rpcName, timeoutMs, args)
   }
 
   public emitWebView<K extends keyof IServerWebViewRpc>(
@@ -281,39 +352,16 @@ export class Rpc extends shared.SharedRpc {
     rpcName: K,
     ...args: Parameters<IServerWebViewRpc[K]>
   ): Promise<ReturnType<IServerWebViewRpc[K]>> {
-    return new Promise((resolve, reject) => {
-      if (!player.valid) {
-        reject(new shared.RpcError(`webview rpc name: "${rpcName}"`, this.ErrorCodes.PlayerDisconnected))
-        return
-      }
+    return this.emitWebViewFull(player, rpcName, null, args)
+  }
 
-      const webViewPendingEvents: PlayerPendingEvents = this.checkPendingWebViewEvent(
-        player,
-        rpcName,
-      ) ?? new Map()
-
-      webViewPendingEvents.set(
-        rpcName,
-        new shared.RemotePendingController({
-          rpcName,
-          resolve,
-          reject,
-          finish: (): void => {
-            if (!player.valid) return
-            webViewPendingEvents.delete(rpcName)
-          },
-          timeout: this.defaultTimeout,
-        }),
-      )
-
-      this.webViewPendingEvents.set(player, webViewPendingEvents)
-
-      this.emitClientRpcEvent(
-        player,
-        shared.ClientOnServerEvents.CallWebViewEvent,
-        [rpcName, args],
-      )
-    })
+  public emitWebViewWithTimeout<K extends keyof IServerWebViewRpc>(
+    player: alt.Player,
+    rpcName: K,
+    timeoutMs: number,
+    ...args: Parameters<IServerWebViewRpc[K]>
+  ): Promise<ReturnType<IServerWebViewRpc[K]>> {
+    return this.emitWebViewFull(player, rpcName, timeoutMs, args)
   }
 
   private toggleClientEventHandlers(enable: boolean): void {

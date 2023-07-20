@@ -22,11 +22,16 @@ export class Rpc extends shared.SharedRpc {
     alt.on(shared.WebViewOnClientEvents.ServerEventResponse, this.onServerEventResponse.bind(this))
   }
 
-  private async onCallEventFromServer(rpcName: shared.RpcEventName, args: unknown[]): Promise<void> {
+  private async onCallEventFromServer(
+    rpcName: shared.RpcEventName,
+    args: unknown[],
+    timeoutMs: number | null,
+  ): Promise<void> {
     const params = await this.callHandlerFromRemoteSide(
       rpcName,
       shared.RpcHandlerType.WebViewOnServer,
       args,
+      timeoutMs ?? this.defaultTimeout,
     )
     if (!params) return
 
@@ -59,13 +64,18 @@ export class Rpc extends shared.SharedRpc {
       : clientPending.resolve(result)
   }
 
-  private async onClientCallEvent(rpcName: shared.RpcEventName, args: unknown[]): Promise<void> {
+  private async onClientCallEvent(
+    rpcName: shared.RpcEventName,
+    args: unknown[],
+    timeoutMs: number | null,
+  ): Promise<void> {
     logger.info("[webview] onClientCallEvent", rpcName, args)
 
     const params = await this.callHandlerFromRemoteSide(
       rpcName,
       shared.RpcHandlerType.WebViewOnClient,
       args,
+      timeoutMs ?? this.defaultTimeout,
     )
     if (!params) return
 
@@ -88,6 +98,56 @@ export class Rpc extends shared.SharedRpc {
       throw new shared.RpcError(`client rpc name: "${rpcName}"`, shared.ErrorCodes.AlreadyPending)
 
     return clientPendingEvent
+  }
+
+  private emitClientFull<K extends keyof IWebViewClientRpc>(
+    rpcName: K,
+    timeoutMs: number | null,
+    args: Parameters<IWebViewClientRpc[K]>,
+  ): Promise<ReturnType<IWebViewClientRpc[K]>> {
+    return new Promise((resolve, reject) => {
+      const clientPending: shared.RemotePendingController =
+        this.checkPendingClientEvent(rpcName) ??
+        new shared.RemotePendingController({
+          rpcName,
+          resolve,
+          reject,
+          finish: (result: unknown): void => {
+            this.clientPendingEvents.delete(rpcName)
+
+            logger.info(`client rpc name: "${rpcName}" finished with result:`, result)
+          },
+          timeout: timeoutMs ?? this.defaultTimeout,
+        })
+
+      this.clientPendingEvents.set(rpcName, clientPending)
+      alt.emit(shared.ClientOnWebViewEvents.CallEvent, rpcName, args, timeoutMs)
+    })
+  }
+
+  private emitServerFull<K extends keyof IWebViewServerRpc>(
+    rpcName: K,
+    timeoutMs: number | null,
+    args: Parameters<IWebViewServerRpc[K]>,
+  ): Promise<ReturnType<IWebViewServerRpc[K]>> {
+    return new Promise((resolve, reject) => {
+      const serverPending: shared.RemotePendingController =
+        this.checkPendingServerEvent(rpcName) ??
+        new shared.RemotePendingController({
+          rpcName,
+          resolve,
+          reject,
+          finish: (result: unknown): void => {
+            this.serverPendingEvents.delete(rpcName)
+
+            logger.info(`[webview] server rpc name: "${rpcName}" finished with result:`, result)
+          },
+          timeout: timeoutMs ?? this.defaultTimeout,
+        })
+
+      this.serverPendingEvents.set(rpcName, serverPending)
+      alt.emit(shared.ClientOnWebViewEvents.CallServerEvent, rpcName, args, timeoutMs)
+    })
   }
 
   public onServer<K extends keyof IServerWebViewRpc>(
@@ -116,48 +176,30 @@ export class Rpc extends shared.SharedRpc {
     rpcName: K,
     ...args: Parameters<IWebViewClientRpc[K]>
   ): Promise<ReturnType<IWebViewClientRpc[K]>> {
-    return new Promise((resolve, reject) => {
-      const clientPending: shared.RemotePendingController =
-        this.checkPendingClientEvent(rpcName) ??
-        new shared.RemotePendingController({
-          rpcName,
-          resolve,
-          reject,
-          finish: (result: unknown): void => {
-            this.clientPendingEvents.delete(rpcName)
+    return this.emitClientFull(rpcName, null, args)
+  }
 
-            logger.info(`client rpc name: "${rpcName}" finished with result:`, result)
-          },
-          timeout: this.defaultTimeout,
-        })
-
-      this.clientPendingEvents.set(rpcName, clientPending)
-      alt.emit(shared.ClientOnWebViewEvents.CallEvent, rpcName, args)
-    })
+  public emitClientWithTimeout<K extends keyof IWebViewClientRpc>(
+    rpcName: K,
+    timeoutMs: number,
+    ...args: Parameters<IWebViewClientRpc[K]>
+  ): Promise<ReturnType<IWebViewClientRpc[K]>> {
+    return this.emitClientFull(rpcName, timeoutMs, args)
   }
 
   public emitServer<K extends keyof IWebViewServerRpc>(
     rpcName: K,
     ...args: Parameters<IWebViewServerRpc[K]>
   ): Promise<ReturnType<IWebViewServerRpc[K]>> {
-    return new Promise((resolve, reject) => {
-      const clientPending: shared.RemotePendingController =
-        this.checkPendingServerEvent(rpcName) ??
-        new shared.RemotePendingController({
-          rpcName,
-          resolve,
-          reject,
-          finish: (result: unknown): void => {
-            this.serverPendingEvents.delete(rpcName)
+    return this.emitServerFull(rpcName, null, args)
+  }
 
-            logger.info(`[webview] server rpc name: "${rpcName}" finished with result:`, result)
-          },
-          timeout: this.defaultTimeout,
-        })
-
-      this.serverPendingEvents.set(rpcName, clientPending)
-      alt.emit(shared.ClientOnWebViewEvents.CallServerEvent, rpcName, args)
-    })
+  public emitServerWithTimeout<K extends keyof IWebViewServerRpc>(
+    rpcName: K,
+    timeoutMs: number,
+    ...args: Parameters<IWebViewServerRpc[K]>
+  ): Promise<ReturnType<IWebViewServerRpc[K]>> {
+    return this.emitServerFull(rpcName, timeoutMs, args)
   }
 
   public reset(): void {

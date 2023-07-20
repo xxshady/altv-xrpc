@@ -48,6 +48,7 @@ export class SharedRpc {
     eventName: string,
     handlerType: T,
     args: unknown[],
+    timeout: number,
   ): Promise<RpcHandlerResult> {
     const key = this.createRpcKeyFromName(eventName, handlerType)
     const handlerInfo = this.getRpcHandlerInfoByKey(key)
@@ -55,27 +56,29 @@ export class SharedRpc {
     if (!handlerInfo)
       return ErrorCodes.HandlerNotRegistered
 
-    return await handlerInfo.startPendingHandler(...args)
+    return await handlerInfo.startPendingHandler(args, timeout)
   }
 
   protected async callHandlerFromRemoteSide<T extends RpcHandlerType>(
     rpcName: RpcEventName,
     handlerType: T,
     args: unknown[],
+    timeout: number,
   ): Promise<SharedEventResponseParams | undefined> {
-    const result = await this.callHandler(rpcName, handlerType, args)
-    return this.handleCallHandlerResultFromRemoteSide(rpcName, result)
+    const result = await this.callHandler(rpcName, handlerType, args, timeout)
+    return this.handleCallHandlerResultFromRemoteSide(rpcName, result, timeout)
   }
 
   private handleCallHandlerResultFromRemoteSide(
     rpcName: RpcEventName,
     result: RpcHandlerResult,
+    timeout: number,
   ): SharedEventResponseParams | undefined {
     let params: SharedEventResponseParams
 
     if (typeof result === "number") {
       if (result === ErrorCodes.Expired) {
-        this.logger.warn(`[Expired] rpc name: "${rpcName}" call handler duration was too long > ${defaultTimeout} ms`)
+        this.logger.warn(`[Expired] rpc name: "${rpcName}" call handler duration was too long > ${timeout} ms`)
         return
       }
 
