@@ -87,7 +87,7 @@ export class Rpc extends shared.SharedRpc {
   private async onClientCallEvent(
     player: alt.Player,
     rpcName: shared.RpcEventName,
-    args: unknown[],
+    rawArgs: unknown[],
     timeoutMs: number | null,
   ): Promise<void> {
     logger.info("onClientCallEvent", "player:", player.toString(), rpcName)
@@ -95,7 +95,8 @@ export class Rpc extends shared.SharedRpc {
     let callingArgs: unknown[]
     const { clientServerCall } = this.hooks
     if (clientServerCall) {
-      const hookedCall = clientServerCall(player, rpcName, args)
+      // TODO: wrap user callback in try catch
+      const hookedCall = clientServerCall(player, rpcName, rawArgs)
       if (!hookedCall) {
         logger.error(`client->server rpc name: "${rpcName}" call failed, "clientServerCall" hook returned null (InvalidClientServerArgsOrPlayer)`)
         this.emitClientRpcEvent(
@@ -108,7 +109,7 @@ export class Rpc extends shared.SharedRpc {
 
       callingArgs = [hookedCall.player, ...hookedCall.args]
     }
-    else callingArgs = [player, ...args]
+    else callingArgs = [player, ...rawArgs]
 
     const params = await this.callHandlerFromRemoteSide(
       rpcName,
@@ -140,7 +141,8 @@ export class Rpc extends shared.SharedRpc {
 
     let response: unknown
     const { serverClientResponse } = this.hooks
-    if (serverClientResponse) {
+    if (!error && serverClientResponse) {
+      // TODO: wrap user callback in try catch
       const hookedResponse = serverClientResponse(player, rpcName, rawResponse)
       if (hookedResponse == null) {
         clientPending.reject(
@@ -162,32 +164,67 @@ export class Rpc extends shared.SharedRpc {
     player: alt.Player,
     rpcName: shared.RpcEventName,
     error: shared.ErrorCodes | null,
-    result: unknown,
+    rawResponse: unknown,
   ): void {
-    const clientPending = this.webViewPendingEvents.get(player)?.get(rpcName)
+    const webViewPending = this.webViewPendingEvents.get(player)?.get(rpcName)
 
-    if (!clientPending) {
-      logger.warn(`[onWebViewEventResponse] rpc name: "${rpcName}" received expired response: ${result}`)
+    if (!webViewPending) {
+      logger.warn(`[onWebViewEventResponse] rpc name: "${rpcName}" received expired response: ${rawResponse}`)
       return
     }
 
+    let response: unknown
+    const { serverWebViewResponse } = this.hooks
+    if (!error && serverWebViewResponse) {
+      // TODO: wrap user callback in try catch
+      const hookedResponse = serverWebViewResponse(player, rpcName, rawResponse)
+      if (hookedResponse == null) {
+        webViewPending.reject(
+          `rpc.emitWebView rpc name: "${rpcName}" failed, player id: ${player.id}`,
+          this.ErrorCodes.InvalidServerWebViewResponse,
+        )
+        return
+      }
+      response = hookedResponse.response
+    }
+    else response = rawResponse
+
     error
-      ? clientPending.reject(`rpc.emitWebView rpc name: "${rpcName}" failed, player id: ${player.id}`, error)
-      : clientPending.resolve(result)
+      ? webViewPending.reject(`rpc.emitWebView rpc name: "${rpcName}" failed, player id: ${player.id}`, error)
+      : webViewPending.resolve(response)
   }
 
   private async onWebViewCallEvent(
     player: alt.Player,
     rpcName: shared.RpcEventName,
-    args: unknown[],
+    rawArgs: unknown[],
     timeoutMs: number | null,
   ): Promise<void> {
     logger.info("onWebViewCallEvent", "player:", player.toString(), "rpc:", rpcName)
 
+    let callingArgs: unknown[]
+    const { webViewServerCall } = this.hooks
+    if (webViewServerCall) {
+      // TODO: wrap user callback in try catch
+      const hookedCall = webViewServerCall(player, rpcName, rawArgs)
+      if (!hookedCall) {
+        logger.error(`webview->server rpc name: "${rpcName}" call failed, "webViewServerCall" hook returned null (InvalidWebViewServerArgsOrPlayer)`)
+        this.emitClientRpcEvent(
+          player,
+          shared.ClientOnServerEvents.WebViewEventResponse,
+          [rpcName, shared.ErrorCodes.InvalidWebViewServerArgsOrPlayer, null],
+        )
+        return
+      }
+
+      callingArgs = [hookedCall.player, ...hookedCall.args]
+    }
+    else callingArgs = [player, ...rawArgs]
+
     const params = await this.callHandlerFromRemoteSide(
       rpcName,
       shared.RpcHandlerType.ServerOnWebView,
-      [player, ...args],
+      [player, ...callingArgs],
       timeoutMs ?? this.defaultTimeout,
     )
 

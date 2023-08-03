@@ -9,6 +9,8 @@ export enum ErrorCodes {
   WebViewNotAdded,
   InvalidClientServerArgsOrPlayer,
   InvalidServerClientResponse,
+  InvalidServerWebViewResponse,
+  InvalidWebViewServerArgsOrPlayer,
 }
 
 export class RpcError extends Error {
