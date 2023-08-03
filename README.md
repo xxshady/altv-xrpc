@@ -178,9 +178,7 @@ alt.on("playerConnect", (player) => {
 
 ## Server-side hooks API
 
-Easier verification of everything the client sends to the server (client->server rpc call, server->client rpc response).
-
-> webview<->server rpcs are not supported yet
+Easier verification of everything the client (webview) sends to the server (client->server rpc call, server->client rpc response).
 
 server-side
 
@@ -237,7 +235,7 @@ const response = await rpc.emitClient(player, "b")
 
 ```
 
-client-side
+client-side (same for webview)
 
 ```ts
 import { rpc } from "altv-xrpc-client"
