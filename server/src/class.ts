@@ -224,7 +224,7 @@ export class Rpc extends shared.SharedRpc {
     const params = await this.callHandlerFromRemoteSide(
       rpcName,
       shared.RpcHandlerType.ServerOnWebView,
-      [player, ...callingArgs],
+      callingArgs,
       timeoutMs ?? this.defaultTimeout,
     )
 
