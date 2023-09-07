@@ -1,6 +1,6 @@
 {
   "name": "altv-xrpc-shared-types",
-  "version": "0.3.2",
+  "version": "0.3.5",
   "types": "types/types/index.d.ts",
   "files": [
     "types/**/*"
