@@ -56,7 +56,7 @@ export class SharedRpc {
     if (!handlerInfo)
       return ErrorCodes.HandlerNotRegistered
 
-    return await handlerInfo.startPendingHandler(args, timeout)
+    return await handlerInfo.startPendingHandler(eventName, args, timeout)
   }
 
   protected async callHandlerFromRemoteSide<T extends RpcHandlerType>(

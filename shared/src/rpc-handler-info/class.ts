@@ -6,6 +6,7 @@ import type {
   RpcHandlerInfoHandler,
   RpcHandlerResult,
   RpcHandlerCallResult,
+  RpcEventName,
 } from "../types"
 
 const logger = new Logger(console)
@@ -17,6 +18,8 @@ export class RpcHandlerInfo {
    * value: +new Date()
    */
   private startHandlerCallTime = 0
+  private currentTimeout: number | null = null
+  private currentCallId = Symbol("initial")
 
   constructor(
     public readonly key: RpcHandlerKey,
@@ -38,23 +41,48 @@ export class RpcHandlerInfo {
   }
 
   public async startPendingHandler(
+    rpcName: RpcEventName,
     callHandlerArgs: unknown[],
     timeout: number,
   ): Promise<RpcHandlerResult> {
-    const errorStartPending = this.setPending(true)
+    const startPendingError = this.setPending(true)
 
-    if (errorStartPending != null)
-      return errorStartPending
+    if (startPendingError != null) {
+      if (startPendingError !== ErrorCodes.RemoteAlreadyPending) return startPendingError
+
+      const currentTimeout = this.currentTimeout
+      if (currentTimeout == null)
+        throw new Error("[startPendingHandler] this.currentTimeout must be defined")
+      const duration = this.getCallDuration()
+
+      // logger.info("[startPendingHandler]", {
+      //   duration,
+      //   currentTimeout: currentTimeout,
+      // })
+
+      if (duration < currentTimeout) return startPendingError
+
+      logger.warn(`[Expired] rpc name: "${rpcName}" call handler duration was too long > ${currentTimeout} ms (starting new call)`)
+    }
 
     this.startHandlerCallTime = +new Date()
+    this.currentTimeout = timeout
+
+    const currentCallId = Symbol("currentCallId")
+    this.currentCallId = currentCallId
+
     const handlerResult = await this.handler(...callHandlerArgs)
-    const handlerCallDelay = (+new Date()) - this.startHandlerCallTime
+
+    if (this.currentCallId !== currentCallId) {
+      logger.warn(`Some old call of rpc: "${rpcName}" was resolved`)
+      return ErrorCodes.Expired
+    }
+
+    const handlerCallDuration = this.getCallDuration()
 
     this.setPending(false)
 
-    if (handlerCallDelay > timeout)
-      return ErrorCodes.Expired
-
+    if (handlerCallDuration > timeout) return ErrorCodes.Expired
     return handlerResult
   }
 
@@ -67,5 +95,12 @@ export class RpcHandlerInfo {
     }
 
     this.pending = value
+
+    if (!value)
+      this.currentTimeout = null
+  }
+
+  private getCallDuration(): number {
+    return (+new Date()) - this.startHandlerCallTime
   }
 }
