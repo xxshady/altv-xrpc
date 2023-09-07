@@ -32,6 +32,6 @@
         "dev:webview": "cd webview && yarn dev",
         "dev": "concurrently 'yarn:dev:*'",
         "build": "lerna run build",
-        "publ": "yarn build && lerna publish"
+        "publ": "yarn build && lerna publish --force-publish"
     }
 }
